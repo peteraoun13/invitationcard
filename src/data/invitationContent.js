@@ -1,4 +1,4 @@
-import coverPhoto from "../assets/cover-photo.png";
+import coverPhoto from "../assets/cover-photo.svg";
 import envelopeKeepsake from "../assets/enveloppe.svg";
 import floralBackground from "../assets/bg-green.svg";
 import flowerLeft from "../assets/flower-left.svg";
