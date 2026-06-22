@@ -54,6 +54,8 @@ export default function FloralFrameSection() {
         src={assets.floralBackground}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
         draggable="false"
       />
 
@@ -75,6 +77,8 @@ export default function FloralFrameSection() {
         src={assets.flowerLeft}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
         draggable="false"
         variants={{
           hidden: { opacity: 0, x: "-54%", y: 8, rotate: -8, scale: 0.96 },
@@ -94,6 +98,8 @@ export default function FloralFrameSection() {
         src={assets.flowerRight}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
         draggable="false"
         variants={{
           hidden: { opacity: 0, x: "54%", y: 8, rotate: 8, scale: 0.96 },

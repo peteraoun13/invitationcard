@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import EnvelopeIntro from "./components/EnvelopeIntro.jsx";
 import InvitationCard from "./components/InvitationCard.jsx";
+import { invitationContent } from "./data/invitationContent.js";
 
 const audioModules = import.meta.glob(
   [
@@ -38,6 +39,29 @@ export default function App() {
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const musicRef = useRef(null);
   const hasMusic = Boolean(musicSources.mp3 || musicSources.m4a || musicSources.ogg);
+
+  useEffect(() => {
+    const coverPhoto = invitationContent.assets.coverPhoto;
+
+    if (!coverPhoto) return;
+
+    // Preload the first invitation image while the envelope intro is showing.
+    // This prevents a blank card while mobile browsers download the cover.
+    const preloadLink = document.createElement("link");
+    preloadLink.rel = "preload";
+    preloadLink.as = "image";
+    preloadLink.href = coverPhoto;
+    document.head.appendChild(preloadLink);
+
+    const image = new Image();
+    image.decoding = "async";
+    image.fetchPriority = "high";
+    image.src = coverPhoto;
+
+    return () => {
+      preloadLink.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // The envelope scene is locked to one screen. Once the card appears, the
@@ -118,7 +142,7 @@ export default function App() {
       </AnimatePresence>
 
       {hasMusic && (
-        <audio ref={musicRef} preload="auto" loop>
+        <audio ref={musicRef} preload="metadata" loop>
           {/* Replace src/assets/song.mp3 with the wedding song you want. */}
           {musicSources.ogg && <source src={musicSources.ogg} type="audio/ogg" />}
           {musicSources.m4a && <source src={musicSources.m4a} type="audio/mp4" />}

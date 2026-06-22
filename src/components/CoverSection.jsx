@@ -10,6 +10,9 @@ export default function CoverSection() {
         className="cover-photo"
         src={assets.coverPhoto}
         alt={`${couple.names} wedding portrait`}
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
         draggable="false"
       />
 

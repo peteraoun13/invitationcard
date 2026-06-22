@@ -26,6 +26,8 @@ export default function TimelineSection() {
         src={assets.timelineArt}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
         draggable="false"
       />
 

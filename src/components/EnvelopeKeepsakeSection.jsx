@@ -13,6 +13,8 @@ export default function EnvelopeKeepsakeSection() {
         className="envelope-keepsake-art"
         src={assets.envelopeKeepsake}
         alt={`${couple.names} wedding envelope with photos`}
+        loading="lazy"
+        decoding="async"
         draggable="false"
         initial={{ opacity: 0, y: 34, scale: 0.96 }}
         whileInView={{
