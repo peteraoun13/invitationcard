@@ -679,7 +679,7 @@ a {
 }
 
 .timeline-event--right {
-  top: clamp(420px, 48svh, 520px);
+  top: clamp(360px, 41svh, 452px);
   right: clamp(8px, 2.2svh, 26px);
   bottom: auto;
 }
@@ -1026,7 +1026,7 @@ a {
   }
 
   .timeline-event--right {
-    top: clamp(414px, 45.5svh, 474px);
+    top: clamp(352px, 40svh, 420px);
     right: clamp(8px, 1.8svh, 18px);
   }
 
@@ -1168,7 +1168,7 @@ a {
   }
 
   .timeline-event--right {
-    top: clamp(400px, 46svh, 462px);
+    top: clamp(326px, 38svh, 382px);
     right: 8px;
   }
 
