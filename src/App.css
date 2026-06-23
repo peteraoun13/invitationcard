@@ -292,6 +292,11 @@ a {
   user-select: none;
 }
 
+.cover-video {
+  background: var(--site-bg);
+  pointer-events: none;
+}
+
 .cover-shade {
   position: absolute;
   inset: 0;

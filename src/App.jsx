@@ -45,8 +45,8 @@ export default function App() {
 
     if (!coverPhoto) return;
 
-    // Preload the first invitation image while the envelope intro is showing.
-    // This prevents a blank card while mobile browsers download the cover.
+    // Preload the cover poster while the envelope intro is showing.
+    // The full cover video is large, so it streams only when the card appears.
     const preloadLink = document.createElement("link");
     preloadLink.rel = "preload";
     preloadLink.as = "image";

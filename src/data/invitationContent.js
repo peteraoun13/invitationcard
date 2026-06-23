@@ -1,13 +1,33 @@
-import coverPhoto from "../assets/cover-photo.svg";
 import envelopeKeepsake from "../assets/enveloppe.svg";
 import floralBackground from "../assets/bg-green.svg";
 import flowerLeft from "../assets/flower-left.svg";
 import flowerRight from "../assets/flower-right.svg";
 import timelineArt from "../assets/timeline.png";
 
+const coverMediaModules = import.meta.glob(
+  [
+    "../assets/cover-photo.png",
+    "../assets/video.mp4",
+  ],
+  {
+    eager: true,
+    import: "default",
+    query: "?url",
+  },
+);
+
+function getCoverMedia(fileName) {
+  return coverMediaModules[`../assets/${fileName}`] ?? "";
+}
+
+const coverPhoto = getCoverMedia("cover-photo.png");
+const coverVideo = getCoverMedia("video.mp4");
+
 export const invitationContent = {
   assets: {
-    // Change this image when you want a different first website cover photo.
+    // Change video.mp4 in src/assets/ when you want a different looping cover video.
+    coverVideo,
+    // This image is used as the video poster/fallback while the cover video loads.
     coverPhoto,
     // Replace this SVG to edit the envelope/photo keepsake section.
     envelopeKeepsake,
