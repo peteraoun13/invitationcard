@@ -62,8 +62,9 @@ a {
 }
 
 .app--scrollable {
-  min-height: 100vh;
-  overflow: visible;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 .screen-layer {
@@ -76,9 +77,9 @@ a {
 }
 
 .screen-layer--flow {
-  height: auto;
-  min-height: 100vh;
-  overflow: visible;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 .intro-screen {
@@ -251,26 +252,351 @@ a {
 
 .invitation-page {
   position: relative;
-  min-height: 100svh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
   padding: 0;
-  background:
-    linear-gradient(rgba(247, 244, 241, 0.82), rgba(247, 244, 241, 0.82)),
-    var(--paper-texture, none),
-    var(--site-bg);
-  background-size: auto, cover, auto;
+  background: #000;
+  color: #fff;
 }
 
 .site-reveal-wash {
   position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
+  inset: 0;
   z-index: 30;
-  height: 100svh;
+  height: 100%;
+  pointer-events: none;
+  background: #000;
+}
+
+.video-invite-page {
+  isolation: isolate;
+}
+
+.video-invite-bg,
+.video-invite-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.video-invite-bg {
+  object-fit: cover;
+  object-position: center center;
+  transform: scale(1.06);
+  user-select: none;
+}
+
+.video-invite-fallback {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.12), transparent 32%),
+    #000;
+}
+
+.video-invite-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.96), rgba(255, 253, 248, 0.98) 52%),
-    var(--site-bg);
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.28) 0%,
+      rgba(0, 0, 0, 0.14) 34%,
+      rgba(0, 0, 0, 0.36) 100%
+    ),
+    radial-gradient(circle at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.34) 78%);
+}
+
+.video-invite-scroll {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.video-invite-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.video-invite-panel {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: max(56px, env(safe-area-inset-top)) clamp(22px, 6vw, 42px)
+    max(76px, calc(env(safe-area-inset-bottom) + 54px));
+  scroll-snap-align: start;
+  color: #fff;
+  text-align: center;
+  text-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.52),
+    0 12px 34px rgba(0, 0, 0, 0.42);
+}
+
+.video-invite-hero {
+  justify-content: center;
+}
+
+.video-invite-hero h1,
+.video-script-names {
+  margin: 0;
+  font-family: var(--font-script);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.video-invite-hero h1 {
+  font-size: clamp(4.05rem, 17vw, 6.65rem);
+}
+
+.video-invite-date {
+  margin: clamp(18px, 2.6svh, 28px) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 4.2vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  line-height: 1.4;
+  text-transform: lowercase;
+}
+
+.video-scroll-cue {
+  position: absolute;
+  bottom: max(48px, calc(env(safe-area-inset-bottom) + 30px));
+  left: 50%;
+  width: 1px;
+  height: clamp(44px, 7svh, 72px);
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+  transform: translateX(-50%);
+}
+
+.video-scroll-cue::before {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  content: "";
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  transform: translate(-50%, -50%);
+}
+
+.video-copy-panel,
+.video-gift-panel,
+.video-rsvp-panel,
+.video-countdown-panel {
+  gap: clamp(18px, 3svh, 30px);
+}
+
+.video-section-title {
+  display: grid;
+  gap: clamp(6px, 1svh, 10px);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7.2vw, 3.25rem);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.video-section-rule {
+  position: relative;
+  display: block;
+  width: clamp(112px, 34vw, 164px);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.video-section-rule::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  content: "";
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.video-copy-stack {
+  display: grid;
+  gap: clamp(12px, 2svh, 20px);
+  width: min(100%, 420px);
+}
+
+.video-copy-stack p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 4.5vw, 1.35rem);
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+}
+
+.video-copy-stack .video-script-names {
+  font-size: clamp(3.7rem, 15vw, 6rem);
+}
+
+.video-gift-copy,
+.video-rsvp-panel {
+  display: grid;
+  width: min(100%, 460px);
+}
+
+.video-gift-copy {
+  gap: clamp(22px, 4svh, 34px);
+}
+
+.video-gift-copy p,
+.video-rsvp-line {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.42rem, 5.8vw, 2.2rem);
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: 0.025em;
+}
+
+.video-gift-contact {
+  margin-top: clamp(8px, 1.8svh, 16px);
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  letter-spacing: 0.04em;
+}
+
+.video-rsvp-panel {
+  justify-items: center;
+}
+
+.video-rsvp-title {
+  display: grid;
+  gap: clamp(6px, 1svh, 10px);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7.2vw, 3.25rem);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.video-rsvp-line {
+  width: min(100%, 430px);
+}
+
+.video-guest-list {
+  display: grid;
+  gap: clamp(14px, 2.4svh, 22px);
+  width: min(100%, 360px);
+  margin: clamp(8px, 2svh, 18px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.video-guest-list li {
+  display: grid;
+  grid-template-columns: clamp(26px, 6vw, 34px) 1fr;
+  align-items: center;
+  gap: clamp(14px, 4vw, 22px);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 5.7vw, 2.15rem);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.video-guest-check {
+  display: block;
+  width: clamp(22px, 5vw, 28px);
+  aspect-ratio: 1;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+}
+
+.video-rsvp-button {
+  display: inline-flex;
+  min-width: clamp(136px, 38vw, 178px);
+  min-height: clamp(42px, 6.4svh, 52px);
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(10px, 2.2svh, 20px);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(0.92rem, 3.4vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.42);
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+}
+
+.video-countdown-heading,
+.video-countdown-item span {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.video-countdown-heading {
+  margin: 0;
+  font-size: clamp(0.82rem, 3.4vw, 1.02rem);
+}
+
+.video-countdown-grid {
+  display: grid;
+  width: min(100%, 460px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(8px, 2vw, 18px);
+}
+
+.video-countdown-item {
+  position: relative;
+  display: grid;
+  gap: clamp(6px, 1.1svh, 10px);
+  min-width: 0;
+}
+
+.video-countdown-item + .video-countdown-item::before {
+  position: absolute;
+  top: 0.2em;
+  left: calc(clamp(8px, 2vw, 18px) * -0.58);
+  content: ".";
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 11vw, 4.4rem);
+  line-height: 1;
+}
+
+.video-countdown-item strong {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 11vw, 4.4rem);
+  font-weight: 400;
+  line-height: 0.96;
+}
+
+.video-countdown-item span {
+  font-size: clamp(0.58rem, 2.3vw, 0.78rem);
+  letter-spacing: 0.16em;
 }
 
 .cover-section {
@@ -971,7 +1297,7 @@ a {
   .screen-layer--flow {
     height: var(--phone-frame-height);
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
     border: 0;
     border-radius: 0;
@@ -995,17 +1321,54 @@ a {
   }
 
   .invitation-page {
-    min-height: var(--phone-frame-height);
+    height: 100%;
+    min-height: 100%;
     padding: 0;
-    background:
-      linear-gradient(rgba(247, 244, 241, 0.82), rgba(247, 244, 241, 0.82)),
-      var(--paper-texture, none),
-      var(--site-bg);
-    background-size: auto, cover, auto;
+    background: #000;
   }
 
   .site-reveal-wash {
-    height: var(--phone-frame-height);
+    height: 100%;
+  }
+
+  .video-invite-panel {
+    min-height: var(--phone-frame-height);
+    padding-right: clamp(26px, 4.8svh, 50px);
+    padding-left: clamp(26px, 4.8svh, 50px);
+  }
+
+  .video-invite-hero h1 {
+    font-size: clamp(4.35rem, 7.8svh, 6.3rem);
+  }
+
+  .video-invite-date {
+    font-size: clamp(1.18rem, 2.25svh, 1.5rem);
+  }
+
+  .video-section-title {
+    font-size: clamp(2.05rem, 4.2svh, 3.05rem);
+  }
+
+  .video-copy-stack .video-script-names {
+    font-size: clamp(4rem, 7svh, 5.7rem);
+  }
+
+  .video-gift-copy p,
+  .video-rsvp-line {
+    font-size: clamp(1.42rem, 2.95svh, 2rem);
+  }
+
+  .video-rsvp-title {
+    font-size: clamp(2rem, 4.2svh, 3.05rem);
+  }
+
+  .video-guest-list li {
+    font-size: clamp(1.36rem, 2.75svh, 1.8rem);
+  }
+
+  .video-countdown-item strong,
+  .video-countdown-item + .video-countdown-item::before {
+    font-size: clamp(2.35rem, 5.2svh, 3.9rem);
   }
 
   .music-toggle {
@@ -1143,6 +1506,51 @@ a {
   .wax-hotspot {
     width: clamp(112px, 14.8svh, 140px);
     height: clamp(112px, 14.8svh, 140px);
+  }
+
+  .video-invite-panel {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .video-invite-hero h1 {
+    font-size: clamp(3.95rem, 17vw, 5.2rem);
+  }
+
+  .video-invite-date {
+    font-size: clamp(1rem, 3.9vw, 1.22rem);
+    letter-spacing: 0.26em;
+  }
+
+  .video-section-title {
+    font-size: clamp(1.72rem, 6.8vw, 2.35rem);
+    letter-spacing: 0.2em;
+  }
+
+  .video-copy-stack .video-script-names {
+    font-size: clamp(3.6rem, 14.5vw, 5rem);
+  }
+
+  .video-gift-copy p,
+  .video-rsvp-line {
+    font-size: clamp(1.28rem, 5.5vw, 1.78rem);
+  }
+
+  .video-rsvp-title {
+    font-size: clamp(1.72rem, 6.8vw, 2.35rem);
+  }
+
+  .video-guest-list li {
+    font-size: clamp(1.18rem, 5vw, 1.58rem);
+  }
+
+  .video-countdown-grid {
+    gap: 8px;
+  }
+
+  .video-countdown-item strong,
+  .video-countdown-item + .video-countdown-item::before {
+    font-size: clamp(2rem, 9.8vw, 3.25rem);
   }
 
   .cover-section {

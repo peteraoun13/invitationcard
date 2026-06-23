@@ -1,42 +1,202 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import CoverSection from "./CoverSection.jsx";
-import EnvelopeKeepsakeSection from "./EnvelopeKeepsakeSection.jsx";
-import FloralFrameSection from "./FloralFrameSection.jsx";
-import TimelineSection from "./TimelineSection.jsx";
-import WeddingInvitationSection from "./WeddingInvitationSection.jsx";
+import { invitationContent } from "../data/invitationContent.js";
 
-const assetModules = import.meta.glob("../assets/paper-texture.png", {
-  eager: true,
-  import: "default",
-  query: "?url",
-});
+const countdownUnits = [
+  ["days", "Days"],
+  ["hours", "Hours"],
+  ["minutes", "Minutes"],
+  ["seconds", "Seconds"],
+];
 
-const paperTexture = assetModules["../assets/paper-texture.png"] ?? "";
+function getRemainingTime(targetDate) {
+  const distance = Math.max(targetDate.getTime() - Date.now(), 0);
+  const totalSeconds = Math.floor(distance / 1000);
+
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
+}
+
+function formatCountdownValue(value) {
+  return value < 100 ? String(value).padStart(2, "0") : String(value);
+}
 
 export default function InvitationCard() {
+  const { assets, couple, wedding } = invitationContent;
+  const videoRef = useRef(null);
+  const weddingDate = useMemo(
+    () => new Date(wedding.countdownTarget),
+    [wedding.countdownTarget],
+  );
+  const [remaining, setRemaining] = useState(() => getRemainingTime(weddingDate));
+  const [videoFailed, setVideoFailed] = useState(false);
+
+  const hasVideo = Boolean(assets.coverVideo) && !videoFailed;
+
+  useEffect(() => {
+    const tick = () => setRemaining(getRemainingTime(weddingDate));
+    tick();
+
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [weddingDate]);
+
+  function playCoverVideo() {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    video.play().catch(() => {
+      // Muted inline video is expected to autoplay; if not, text remains readable.
+    });
+  }
+
   return (
-    <div
-      className="invitation-page"
-      style={
-        paperTexture
-          ? { "--paper-texture": `url("${paperTexture}")` }
-          : undefined
-      }
-    >
+    <div className="invitation-page video-invite-page">
+      {hasVideo ? (
+        <video
+          ref={videoRef}
+          className="video-invite-bg"
+          src={assets.coverVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          controls={false}
+          onLoadedData={playCoverVideo}
+          onCanPlay={playCoverVideo}
+          onError={() => setVideoFailed(true)}
+        />
+      ) : (
+        <div className="video-invite-fallback" aria-hidden="true" />
+      )}
+
+      <div className="video-invite-overlay" aria-hidden="true" />
+
       <motion.div
         className="site-reveal-wash"
         aria-hidden="true"
         initial={{ opacity: 1 }}
         animate={{
           opacity: 0,
-          transition: { duration: 1.15, ease: [0.22, 1, 0.36, 1] },
+          transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
         }}
       />
-      <CoverSection />
-      <WeddingInvitationSection />
-      <FloralFrameSection />
-      <EnvelopeKeepsakeSection />
-      <TimelineSection />
+
+      <div className="video-invite-scroll">
+        <section className="video-invite-panel video-invite-hero">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: { delay: 0.18, duration: 1, ease: [0.22, 1, 0.36, 1] },
+            }}
+          >
+            <h1>{couple.names}</h1>
+            <p className="video-invite-date">{wedding.shortDate}</p>
+          </motion.div>
+          <span className="video-scroll-cue" aria-hidden="true" />
+        </section>
+
+        <motion.section
+          className="video-invite-panel video-copy-panel"
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+          }}
+          viewport={{ once: true, amount: 0.28 }}
+        >
+          <h2 className="video-section-title">
+            {wedding.invitationTitle.split("\n").map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </h2>
+          <span className="video-section-rule" aria-hidden="true" />
+
+          <div className="video-copy-stack">
+            <p>{wedding.familyLine},</p>
+            <p className="video-script-names">{couple.names}</p>
+            <p>{wedding.inviteLine}</p>
+            <p>{wedding.welcomeLine}</p>
+          </div>
+        </motion.section>
+
+        <motion.section
+          className="video-invite-panel video-gift-panel"
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+          }}
+          viewport={{ once: true, amount: 0.32 }}
+        >
+          <div className="video-gift-copy">
+            {wedding.giftRegistryLines.map((line, index) => (
+              <p
+                className={index === wedding.giftRegistryLines.length - 1 ? "video-gift-contact" : ""}
+                key={line}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
+        </motion.section>
+
+        <motion.section
+          className="video-invite-panel video-rsvp-panel"
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+          }}
+          viewport={{ once: true, amount: 0.32 }}
+        >
+          <p className="video-rsvp-title">{wedding.rsvpTitle}</p>
+          <p className="video-rsvp-line">{wedding.rsvpLine}</p>
+          <ul className="video-guest-list" aria-label="Guest names">
+            {wedding.guests.map((guest) => (
+              <li key={guest}>
+                <span className="video-guest-check" aria-hidden="true" />
+                <span>{guest}</span>
+              </li>
+            ))}
+          </ul>
+          <a className="video-rsvp-button" href={wedding.rsvpUrl}>
+            {wedding.rsvpButtonLabel}
+          </a>
+        </motion.section>
+
+        <motion.section
+          className="video-invite-panel video-countdown-panel"
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+          }}
+          viewport={{ once: true, amount: 0.32 }}
+        >
+          <p className="video-countdown-heading">{wedding.countdownLabel}</p>
+          <div className="video-countdown-grid">
+            {countdownUnits.map(([key, label]) => (
+              <div className="video-countdown-item" key={key}>
+                <strong>{formatCountdownValue(remaining[key])}</strong>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </motion.section>
+      </div>
     </div>
   );
 }
