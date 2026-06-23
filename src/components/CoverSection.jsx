@@ -1,26 +1,39 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { invitationContent } from "../data/invitationContent.js";
 
 export default function CoverSection() {
   const { assets, couple, wedding } = invitationContent;
+  const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const showVideo = Boolean(assets.coverVideo) && !videoFailed;
+
+  function startCoverVideo() {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    video.play().catch(() => {
+      // Muted autoplay is allowed on modern phones, but the fallback remains safe.
+    });
+  }
 
   return (
     <section className="cover-section" aria-label={`${couple.names} wedding cover`}>
       {showVideo ? (
         <video
+          ref={videoRef}
           className="cover-photo cover-video"
           src={assets.coverVideo}
-          poster={assets.coverPhoto}
           aria-label={`${couple.names} wedding cover video`}
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           controls={false}
+          onLoadedData={startCoverVideo}
+          onCanPlay={startCoverVideo}
           onError={() => setVideoFailed(true)}
         />
       ) : (

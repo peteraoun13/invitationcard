@@ -27,7 +27,7 @@ export const invitationContent = {
   assets: {
     // Change video.mp4 in src/assets/ when you want a different looping cover video.
     coverVideo,
-    // This image is used as the video poster/fallback while the cover video loads.
+    // This image is only used if the cover video is missing or fails to load.
     coverPhoto,
     // Replace this SVG to edit the envelope/photo keepsake section.
     envelopeKeepsake,

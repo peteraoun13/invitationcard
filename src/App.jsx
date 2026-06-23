@@ -41,25 +41,30 @@ export default function App() {
   const hasMusic = Boolean(musicSources.mp3 || musicSources.m4a || musicSources.ogg);
 
   useEffect(() => {
-    const coverPhoto = invitationContent.assets.coverPhoto;
+    const coverVideo = invitationContent.assets.coverVideo;
 
-    if (!coverPhoto) return;
+    if (!coverVideo) return;
 
-    // Preload the cover poster while the envelope intro is showing.
-    // The full cover video is large, so it streams only when the card appears.
+    // Warm up the looping cover video while the envelope intro is showing.
+    // This keeps the card from flashing the still fallback before video starts.
     const preloadLink = document.createElement("link");
     preloadLink.rel = "preload";
-    preloadLink.as = "image";
-    preloadLink.href = coverPhoto;
+    preloadLink.as = "video";
+    preloadLink.href = coverVideo;
+    preloadLink.type = "video/mp4";
     document.head.appendChild(preloadLink);
 
-    const image = new Image();
-    image.decoding = "async";
-    image.fetchPriority = "high";
-    image.src = coverPhoto;
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.src = coverVideo;
+    video.load();
 
     return () => {
       preloadLink.remove();
+      video.removeAttribute("src");
+      video.load();
     };
   }, []);
 
