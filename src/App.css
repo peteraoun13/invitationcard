@@ -351,28 +351,12 @@ a {
 
 .cover-paper-edge {
   position: absolute;
-  right: -5%;
+  right: 0;
   bottom: -1px;
-  left: -5%;
+  left: 0;
   z-index: 3;
-  height: clamp(42px, 7svh, 76px);
+  height: clamp(20px, 3.6svh, 38px);
   background: var(--site-bg);
-  clip-path: polygon(
-    0 70%,
-    8% 64%,
-    15% 74%,
-    23% 58%,
-    31% 66%,
-    39% 48%,
-    49% 62%,
-    58% 46%,
-    68% 58%,
-    78% 42%,
-    88% 56%,
-    100% 46%,
-    100% 100%,
-    0 100%
-  );
 }
 
 .invitation-section {
