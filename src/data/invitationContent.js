@@ -5,15 +5,12 @@ import flowerRight from "../assets/flower-right.svg";
 import timelineArt from "../assets/timeline.png";
 
 const coverMediaModules = import.meta.glob(
-  [
-    "../assets/cover-photo.png",
-    "../assets/video.mp4",
-  ],
+  ["../assets/cover-photo.png", "../assets/video.mp4"],
   {
     eager: true,
     import: "default",
     query: "?url",
-  },
+  }
 );
 
 function getCoverMedia(fileName) {
@@ -25,25 +22,21 @@ const coverVideo = getCoverMedia("video.mp4");
 
 export const invitationContent = {
   assets: {
-    // Change video.mp4 in src/assets/ when you want a different looping cover video.
     coverVideo,
-    // This image is only used if the cover video is missing or fails to load.
     coverPhoto,
-    // Replace this SVG to edit the envelope/photo keepsake section.
     envelopeKeepsake,
-    // Replace these SVGs to edit the floral transition section.
     floralBackground,
     flowerLeft,
     flowerRight,
-    // Replace this PNG to edit the vertical flower timeline artwork.
     timelineArt,
   },
+
   couple: {
     names: "Jad & Hala",
     initials: "J & H",
   },
+
   wedding: {
-    // Change this date text once, then reuse the same style across sections.
     shortDate: "08 | 08 | 2026",
     countdownTarget: "2026-08-08T18:00:00+03:00",
     invitationTitle: "Wedding\nInvitation",
@@ -51,11 +44,13 @@ export const invitationContent = {
     inviteLine: "invite you to celebrate their wedding day.",
     welcomeLine: "We would be honored to have you with us on this special day.",
     countdownLabel: "Until the wedding...",
+
     details: [
       { label: "Date", value: "Saturday, 08 August 2026" },
       { label: "Time", value: "Six o'clock in the evening" },
       { label: "Venue", value: "The Grand Garden Hall" },
     ],
+
     timeline: [
       {
         title: "Church Ceremony",
@@ -73,8 +68,8 @@ export const invitationContent = {
       },
     ],
   },
+
   actions: [
-    // Edit these final buttons for RSVP, map, and calendar links.
     {
       label: "RSVP",
       href: "mailto:rsvp@example.com",

@@ -3,19 +3,17 @@ import { motion } from "framer-motion";
 import { invitationContent } from "../data/invitationContent.js";
 
 export default function CoverSection() {
-  const { assets, couple, wedding } = invitationContent;
+  const { assets, couple } = invitationContent;
   const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
+
   const showVideo = Boolean(assets.coverVideo) && !videoFailed;
 
   function startCoverVideo() {
     const video = videoRef.current;
-
     if (!video) return;
 
-    video.play().catch(() => {
-      // Muted autoplay is allowed on modern phones, but the fallback remains safe.
-    });
+    video.play().catch(() => {});
   }
 
   return (
@@ -56,12 +54,36 @@ export default function CoverSection() {
         animate={{
           opacity: 1,
           y: 0,
-          transition: { delay: 0.28, duration: 1.15, ease: [0.22, 1, 0.36, 1] },
+          transition: {
+            delay: 0.35,
+            duration: 1.2,
+            ease: [0.22, 1, 0.36, 1],
+          },
         }}
       >
         <h1>{couple.names}</h1>
-        <p>{wedding.shortDate}</p>
+
+        <div className="cover-date">
+          <span>08</span>
+          <i />
+          <span>08</span>
+          <i />
+          <span>2026</span>
+        </div>
       </motion.div>
+
+      <motion.div
+  className="scroll-hint"
+  initial={{ opacity: 0 }}
+  animate={{
+    opacity: 1,
+    transition: { delay: 1.4, duration: 1 },
+  }}
+  aria-hidden="true"
+>
+  <div className="scroll-line" />
+  <div className="scroll-dot" />
+</motion.div>
 
       <div className="cover-paper-edge" aria-hidden="true" />
     </section>
