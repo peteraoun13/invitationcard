@@ -245,16 +245,28 @@ export default function InvitationCard() {
           }}
           viewport={{ once: true, amount: 0.32 }}
         >
-          <div className="video-gift-copy">
-            {wedding.giftRegistryLines.map((line, index) => (
-              <p
-                className={index === wedding.giftRegistryLines.length - 1 ? "video-gift-contact" : ""}
-                key={line}
-              >
-                {line}
-              </p>
-            ))}
-          </div>
+         <div className="video-ceremony-card video-gift-card">
+  <p className="video-ceremony-kicker">The</p>
+
+  <h2 className="video-ceremony-title">
+    {wedding.giftTitle.map((line) => (
+      <span key={line}>{line}</span>
+    ))}
+  </h2>
+
+  <span className="video-ceremony-rule" aria-hidden="true" />
+
+  <div className="video-gift-copy">
+    {wedding.giftRegistryLines.map((line, index) => (
+      <p
+        className={index === wedding.giftRegistryLines.length - 1 ? "video-gift-contact" : ""}
+        key={line}
+      >
+        {line}
+      </p>
+    ))}
+  </div>
+</div>
         </motion.section>
 
         <motion.section
