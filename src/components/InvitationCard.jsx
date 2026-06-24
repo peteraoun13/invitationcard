@@ -190,6 +190,50 @@ export default function InvitationCard() {
     </a>
   </div>
 </motion.section>
+<motion.section
+  className="video-invite-panel video-ceremony-panel"
+  initial={{ opacity: 0, y: 28 }}
+  whileInView={{
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+  }}
+  viewport={{ once: true, amount: 0.32 }}
+>
+  <div className="video-ceremony-card">
+    <p className="video-ceremony-kicker">The</p>
+
+   <h2 className="video-ceremony-title">
+  {wedding.partyTitle.map((line) => (
+    <span key={line}>{line}</span>
+  ))}
+</h2>
+
+    <span className="video-ceremony-rule" aria-hidden="true" />
+
+    <p className="video-ceremony-time">
+      {wedding.partyTime}
+    </p>
+
+    <p className="video-ceremony-zone">
+      {wedding.partyTimezone}
+    </p>
+
+    <p className="video-ceremony-place">
+      {wedding.partyPlace}
+    </p>
+
+    <a
+      className="video-ceremony-button"
+      href={wedding.partyLocationUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span className="location-pin" aria-hidden="true" />
+      <span>View Location</span>
+    </a>
+  </div>
+</motion.section>
 
         <motion.section
           className="video-invite-panel video-gift-panel"

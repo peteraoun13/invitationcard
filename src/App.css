@@ -1925,6 +1925,8 @@ a {
 
 .video-ceremony-title {
   margin: 0;
+  width: min-content;
+  max-width: 100%;
   color: rgba(255, 255, 255, 0.98);
   font-family: var(--font-display);
   font-size: clamp(2rem, 7.2vw, 3rem);
@@ -1932,6 +1934,7 @@ a {
   letter-spacing: 0.16em;
   line-height: 1.08;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .video-ceremony-rule {
@@ -2009,4 +2012,20 @@ a {
   text-decoration: none;
   text-transform: uppercase;
   backdrop-filter: blur(8px);
+}.video-ceremony-title {
+  display: grid;
+  justify-items: center;
+  gap: 0.05em;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.98);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7.2vw, 3rem);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.video-ceremony-title span {
+  display: block;
 }
