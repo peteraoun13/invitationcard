@@ -51,6 +51,11 @@ export const invitationContent = {
       "their son and daughter",
     ],
     celebrationDate: "Saturday, August 8, 2026",
+    ceremonyTitle: "Wedding Ceremony",
+ceremonyTime: "6:00 PM",
+ceremonyTimezone: "Beirut time (GMT+3)",
+ceremonyPlace: "Mar Abda Roumieh",
+ceremonyLocationUrl: "PASTE_GOOGLE_MAPS_LINK_HERE",
     countdownLabel: "Until the wedding...",
     giftRegistryLines: [
       "The greatest gift we could have is your presence.",
