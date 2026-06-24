@@ -2134,3 +2134,60 @@ a {
   opacity: 0.42;
   pointer-events: none;
 }
+.video-verse-panel {
+  justify-content: center;
+}
+
+.video-verse-card {
+  width: min(100%, 460px);
+}
+
+.video-verse {
+  display: grid;
+  gap: clamp(8px, 1.1svh, 12px);
+  margin: 0;
+  color: rgba(255, 255, 255, 0.94);
+  font-family: var(--font-display);
+  font-size: clamp(1.42rem, 4.8vw, 1.85rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.42;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.video-verse-citation {
+  margin-top: clamp(16px, 2.2svh, 24px);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.62em;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.video-family-panel .video-invitation-copy {
+  gap: clamp(16px, 2.2svh, 26px);
+}
+
+.video-family-panel .video-blessing-lines {
+  font-size: clamp(1.34rem, 4.8vw, 1.72rem);
+  line-height: 1.36;
+}
+
+.video-family-panel .video-family-name {
+  font-size: clamp(1.05rem, 3.8vw, 1.34rem);
+  letter-spacing: 0.18em;
+}
+
+.video-family-panel .video-request-copy {
+  font-size: clamp(1.24rem, 4.3vw, 1.56rem);
+}
+
+.video-family-panel .video-couple-signature {
+  font-size: clamp(4.1rem, 14vw, 6rem);
+}
+
+.video-family-panel .video-celebration-date {
+  font-size: clamp(1.12rem, 3.8vw, 1.36rem);
+}
