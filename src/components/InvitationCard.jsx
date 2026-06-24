@@ -9,6 +9,8 @@ const countdownUnits = [
   ["seconds", "Seconds"],
 ];
 
+const storyPanelCount = 8;
+
 function getRemainingTime(targetDate) {
   const distance = Math.max(targetDate.getTime() - Date.now(), 0);
   const totalSeconds = Math.floor(distance / 1000);
@@ -28,12 +30,14 @@ function formatCountdownValue(value) {
 export default function InvitationCard() {
   const { assets, couple, wedding } = invitationContent;
   const videoRef = useRef(null);
+  const scrollRef = useRef(null);
   const weddingDate = useMemo(
     () => new Date(wedding.countdownTarget),
     [wedding.countdownTarget],
   );
   const [remaining, setRemaining] = useState(() => getRemainingTime(weddingDate));
   const [videoFailed, setVideoFailed] = useState(false);
+  const [activePanelIndex, setActivePanelIndex] = useState(0);
 const [selectedGuests, setSelectedGuests] = useState([]);
 
 function toggleGuest(guest) {
@@ -69,6 +73,18 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
     });
   }
 
+  function handleStoryScroll(event) {
+    const { scrollTop, clientHeight } = event.currentTarget;
+    const nextIndex = Math.min(
+      storyPanelCount - 1,
+      Math.max(0, Math.round(scrollTop / clientHeight)),
+    );
+
+    setActivePanelIndex((currentIndex) =>
+      currentIndex === nextIndex ? currentIndex : nextIndex,
+    );
+  }
+
   return (
     <div className="invitation-page video-invite-page">
       {hasVideo ? (
@@ -102,7 +118,11 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
         }}
       />
 
-      <div className="video-invite-scroll">
+      <div
+        className="video-invite-scroll"
+        onScroll={handleStoryScroll}
+        ref={scrollRef}
+      >
         <section className="video-invite-panel video-invite-hero">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -115,12 +135,17 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
             <h1>{couple.names}</h1>
             <p className="video-invite-date">{wedding.shortDate}</p>
           </motion.div>
-          <span className="video-scroll-cue" aria-hidden="true" />
+          <div className="video-scroll-cue" aria-hidden="true">
+            <span className="video-scroll-label">Scroll to continue</span>
+            <span className="video-scroll-line">
+              <span className="video-scroll-dot" />
+            </span>
+          </div>
         </section>
 
         <motion.section
   className="video-invite-panel video-copy-panel video-verse-panel"
-  initial={{ opacity: 0, y: 28 }}
+  initial={{ opacity: 0, y: 22 }}
   whileInView={{
     opacity: 1,
     y: 0,
@@ -144,7 +169,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 
 <motion.section
   className="video-invite-panel video-copy-panel video-family-panel"
-  initial={{ opacity: 0, y: 28 }}
+  initial={{ opacity: 0, y: 22 }}
   whileInView={{
     opacity: 1,
     y: 0,
@@ -183,7 +208,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 </motion.section>
         <motion.section
   className="video-invite-panel video-ceremony-panel"
-  initial={{ opacity: 0, y: 28 }}
+  initial={{ opacity: 0, y: 22 }}
   whileInView={{
     opacity: 1,
     y: 0,
@@ -225,7 +250,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 </motion.section>
 <motion.section
   className="video-invite-panel video-ceremony-panel"
-  initial={{ opacity: 0, y: 28 }}
+  initial={{ opacity: 0, y: 22 }}
   whileInView={{
     opacity: 1,
     y: 0,
@@ -270,7 +295,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 
         <motion.section
           className="video-invite-panel video-gift-panel"
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 22 }}
           whileInView={{
             opacity: 1,
             y: 0,
@@ -304,7 +329,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 
   <motion.section
   className="video-invite-panel video-rsvp-panel"
-  initial={{ opacity: 0, y: 28 }}
+  initial={{ opacity: 0, y: 22 }}
   whileInView={{
     opacity: 1,
     y: 0,
@@ -356,7 +381,7 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 </motion.section>
         <motion.section
           className="video-invite-panel video-countdown-panel"
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 22 }}
           whileInView={{
             opacity: 1,
             y: 0,
@@ -374,6 +399,15 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
             ))}
           </div>
         </motion.section>
+      </div>
+
+      <div className="video-story-progress" aria-hidden="true">
+        {Array.from({ length: storyPanelCount }, (_, index) => (
+          <span
+            className={index === activePanelIndex ? "is-active" : ""}
+            key={index}
+          />
+        ))}
       </div>
     </div>
   );
