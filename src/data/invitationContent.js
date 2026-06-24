@@ -44,7 +44,7 @@ export const invitationContent = {
     familyIntro: "Together with their families",
     primaryFamilyName: "Rimonda Nicolas Nassar",
    togetherWith: "and",
-    secondaryFamilyName: "Maroun and Assia Manay",
+    secondaryFamilyName: "Maroun and Assia Mansour",
     requestLines: [
       "request the honor of your",
       "presence at the wedding of",
