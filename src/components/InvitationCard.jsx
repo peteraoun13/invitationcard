@@ -114,18 +114,38 @@ export default function InvitationCard() {
           }}
           viewport={{ once: true, amount: 0.28 }}
         >
-          <h2 className="video-section-title">
-            {wedding.invitationTitle.split("\n").map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </h2>
-          <span className="video-section-rule" aria-hidden="true" />
-
-          <div className="video-copy-stack">
-            <p>{wedding.familyLine},</p>
-            <p className="video-script-names">{couple.names}</p>
-            <p>{wedding.inviteLine}</p>
-            <p>{wedding.welcomeLine}</p>
+          <div className="video-copy-stack video-reference-copy video-invitation-copy">
+            <p className="video-verse">
+              {wedding.invitationVerse.map((line) => (
+                <span
+                  className={line.includes("Corinthians") ? "video-verse-citation" : ""}
+                  key={line}
+                >
+                  {line}
+                </span>
+              ))}
+            </p>
+            <span className="video-mini-rule" aria-hidden="true" />
+            <p className="video-blessing-lines">
+              {wedding.gratitudeLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </p>
+            <p className="video-family-names-group">
+              <span className="video-small-line">{wedding.familyIntro}</span>
+              <span className="video-family-name">{wedding.primaryFamilyName}</span>
+              <span className="video-small-line">{wedding.togetherWith}</span>
+              <span className="video-family-name">{wedding.secondaryFamilyName}</span>
+            </p>
+            <p className="video-invite-lines video-request-copy">
+              {wedding.requestLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </p>
+            <p className="video-signature-line video-couple-signature">
+              {couple.names}
+            </p>
+            <p className="video-celebration-date">{wedding.celebrationDate}</p>
           </div>
         </motion.section>
 

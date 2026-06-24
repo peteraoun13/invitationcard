@@ -31,10 +31,26 @@ export const invitationContent = {
     // Edit the visible invitation text here.
     shortDate: "08 | 08 | 2026",
     countdownTarget: "2026-08-08T18:00:00+03:00",
-    invitationTitle: "Wedding\nInvitation",
-    familyLine: "Together with their families",
-    inviteLine: "invite you to celebrate their wedding day.",
-    welcomeLine: "We would be honored to have you with us on this special day.",
+    invitationVerse: [
+      '"And now these three remain:',
+      "faith, hope and love. But",
+      'the greatest of these is love."',
+      "1 Corinthians 13:13",
+    ],
+    gratitudeLines: [
+      "With grateful hearts and the",
+      "Blessing of God,",
+    ],
+    familyIntro: "Together with their families",
+    primaryFamilyName: "Rimonda Nicolas Nassar",
+   togetherWith: "and",
+    secondaryFamilyName: "Maroun and Assia Manay",
+    requestLines: [
+      "request the honor of your",
+      "presence at the wedding of",
+      "their son and daughter",
+    ],
+    celebrationDate: "Saturday, August 8, 2026",
     countdownLabel: "Until the wedding...",
     giftRegistryLines: [
       "The greatest gift we could have is your presence.",
