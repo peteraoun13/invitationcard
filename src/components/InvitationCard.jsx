@@ -34,7 +34,21 @@ export default function InvitationCard() {
   );
   const [remaining, setRemaining] = useState(() => getRemainingTime(weddingDate));
   const [videoFailed, setVideoFailed] = useState(false);
+const [selectedGuests, setSelectedGuests] = useState([]);
 
+function toggleGuest(guest) {
+  setSelectedGuests((current) =>
+    current.includes(guest)
+      ? current.filter((name) => name !== guest)
+      : [...current, guest],
+  );
+}
+
+const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}&body=${encodeURIComponent(
+  `Hello,\n\nWe confirm our presence for:\n${selectedGuests
+    .map((name) => `- ${name}`)
+    .join("\n")}\n\nThank you.`,
+)}`;
   const hasVideo = Boolean(assets.coverVideo) && !videoFailed;
 
   useEffect(() => {
@@ -269,31 +283,58 @@ export default function InvitationCard() {
 </div>
         </motion.section>
 
-        <motion.section
-          className="video-invite-panel video-rsvp-panel"
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
-          }}
-          viewport={{ once: true, amount: 0.32 }}
-        >
-          <p className="video-rsvp-title">{wedding.rsvpTitle}</p>
-          <p className="video-rsvp-line">{wedding.rsvpLine}</p>
-          <ul className="video-guest-list" aria-label="Guest names">
-            {wedding.guests.map((guest) => (
-              <li key={guest}>
-                <span className="video-guest-check" aria-hidden="true" />
-                <span>{guest}</span>
-              </li>
-            ))}
-          </ul>
-          <a className="video-rsvp-button" href={wedding.rsvpUrl}>
-            {wedding.rsvpButtonLabel}
-          </a>
-        </motion.section>
+  <motion.section
+  className="video-invite-panel video-rsvp-panel"
+  initial={{ opacity: 0, y: 28 }}
+  whileInView={{
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+  }}
+  viewport={{ once: true, amount: 0.32 }}
+>
+  <div className="video-ceremony-card video-rsvp-card">
+    <p className="video-ceremony-kicker">Kindly</p>
 
+    <h2 className="video-rsvp-title-single">
+      {wedding.rsvpTitle}
+    </h2>
+
+    <span className="video-ceremony-rule" aria-hidden="true" />
+
+    <p className="video-rsvp-line">
+      {wedding.rsvpLine}
+    </p>
+
+    <div className="video-guest-list" aria-label="Guest names">
+      {wedding.guests.map((guest) => {
+        const isSelected = selectedGuests.includes(guest);
+
+        return (
+          <button
+            type="button"
+            className={`video-guest-row ${isSelected ? "is-selected" : ""}`}
+            onClick={() => toggleGuest(guest)}
+            key={guest}
+          >
+            <span className="video-guest-square" aria-hidden="true" />
+            <span>{guest}</span>
+          </button>
+        );
+      })}
+    </div>
+
+    <a
+      className={`video-ceremony-button video-rsvp-reserve ${
+        selectedGuests.length === 0 ? "is-disabled" : ""
+      }`}
+      href={selectedGuests.length > 0 ? rsvpHref : undefined}
+      aria-disabled={selectedGuests.length === 0}
+    >
+      <span>{wedding.rsvpButtonLabel}</span>
+    </a>
+  </div>
+</motion.section>
         <motion.section
           className="video-invite-panel video-countdown-panel"
           initial={{ opacity: 0, y: 28 }}
