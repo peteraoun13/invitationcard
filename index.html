@@ -5,8 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/CormorantGaramond-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/CormorantGaramond-Medium.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/CormorantGaramond-SemiBold.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link
       rel="preload"
       href="/fonts/TheWeddingSignature-Regular.ttf"
@@ -20,6 +39,30 @@
     />
     <title>J & H Wedding Invitation</title>
     <style>
+      @font-face {
+        font-family: "Cormorant Garamond";
+        src: url("/fonts/CormorantGaramond-Regular.ttf") format("truetype");
+        font-display: fallback;
+        font-style: normal;
+        font-weight: 400;
+      }
+
+      @font-face {
+        font-family: "Cormorant Garamond";
+        src: url("/fonts/CormorantGaramond-Medium.ttf") format("truetype");
+        font-display: fallback;
+        font-style: normal;
+        font-weight: 500;
+      }
+
+      @font-face {
+        font-family: "Cormorant Garamond";
+        src: url("/fonts/CormorantGaramond-SemiBold.ttf") format("truetype");
+        font-display: fallback;
+        font-style: normal;
+        font-weight: 600;
+      }
+
       @font-face {
         font-family: "The Signature Wedding";
         src: url("/fonts/TheWeddingSignature-Regular.ttf") format("truetype");
@@ -61,7 +104,7 @@
       .initial-loading-screen__mark {
         margin: 0;
         color: #665f4f;
-        font-family: "The Signature Wedding", "Pinyon Script", "Palatino Linotype", Georgia, serif;
+        font-family: "The Signature Wedding", "Bickham Script Pro", "Edwardian Script ITC", Georgia, serif;
         font-size: clamp(4rem, 17vw, 6.5rem);
         font-weight: 400;
         line-height: 0.78;

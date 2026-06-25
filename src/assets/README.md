@@ -1,17 +1,18 @@
-# Invitation Image Assets
+# Invitation Assets
 
-The video-based intro uses these files:
+## Active assets
 
-- `envelope-closed.png` - static full-screen closed envelope image before click
-- `opening-video.mp4` - full-screen envelope opening video
-- `opening-video.webm` - optional video fallback
-- `paper-texture.png` - optional final invitation card texture
+- `envelope-closed.png` - static envelope shown before the guest taps the wax area.
+- `opening-video.mp4` - short envelope opening animation.
+- `video.mp4` - looping full-screen invitation background video.
+- `cover-photo.jpeg` - poster/fallback image while the background video loads.
+- `song.mp3` - looping wedding music.
+- `TheWeddingSignature-Regular.ttf` - local signature font source.
+- `public/fonts/CormorantGaramond-*.ttf` - local serif fonts used by the invitation text.
 
-The old layer files can stay in this folder, but the intro no longer uses them:
+## Optional files
 
-- `wax.png`
-- `flap.png`
-- `paper-preview.png`
+- `opening-video.webm` - optional fallback if you want to provide a WebM intro video.
 
 To move the invisible wax tap target, edit `.wax-hotspot` in `src/App.css`.
-To replace the video, save the new file as `opening-video.mp4` or `opening-video.webm`.
+To update invitation text, edit `src/data/invitationContent.js`.

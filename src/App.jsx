@@ -51,6 +51,8 @@ export default function App() {
         ? Promise.allSettled([
             document.fonts.load('400 1em "The Signature Wedding"'),
             document.fonts.load('400 1em "Cormorant Garamond"'),
+            document.fonts.load('500 1em "Cormorant Garamond"'),
+            document.fonts.load('600 1em "Cormorant Garamond"'),
           ])
         : Promise.resolve();
 
@@ -103,8 +105,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // The envelope scene is locked to one screen. Once the card appears, the
-    // document scrolls normally so long invitation content works on phones.
     document.body.style.overflow = isInvitationOpen ? "auto" : "hidden";
 
     return () => {
