@@ -520,16 +520,6 @@ button {
   white-space: nowrap;
 }
 
-.video-invite-date {
-  margin: clamp(18px, 2.6svh, 28px) 0 0;
-  color: var(--ivory);
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 4.2vw, 1.55rem);
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  line-height: 1.4;
-}
-
 .video-scroll-cue {
   position: absolute;
   left: 50%;
@@ -1245,10 +1235,6 @@ letter-spacing: 0.16em;
     font-size: clamp(4.35rem, 7.8svh, 6.3rem);
   }
 
-  .video-invite-date {
-    font-size: clamp(1.18rem, 2.25svh, 1.5rem);
-  }
-
   .gift-copy p,
   .rsvp-line {
     font-size: clamp(1.28rem, 2.75svh, 1.82rem);
@@ -1296,11 +1282,6 @@ letter-spacing: 0.16em;
 
   .video-invite-hero h1 {
     font-size: clamp(3.95rem, 17vw, 5.2rem);
-  }
-
-  .video-invite-date {
-    font-size: clamp(1rem, 3.9vw, 1.22rem);
-    letter-spacing: 0.26em;
   }
 
   .event-title,
