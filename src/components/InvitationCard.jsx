@@ -3,11 +3,10 @@ import { motion } from "framer-motion";
 import { invitationContent } from "../data/invitationContent.js";
 
 const sectionMotion = {
-  initial: { opacity: 0, y: 22 },
+  initial: { opacity: 0 },
   whileInView: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
   },
   viewport: { once: true, amount: 0.32 },
 };
@@ -124,10 +123,10 @@ function HeroSection({ couple }) {
   return (
     <section className="video-invite-panel video-invite-hero">
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
+       initial={{ opacity: 0 }}
         animate={{
           opacity: 1,
-          y: 0,
+      
           transition: { delay: 0.18, duration: 1, ease: [0.22, 1, 0.36, 1] },
         }}
       >
