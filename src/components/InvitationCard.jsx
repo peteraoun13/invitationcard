@@ -18,7 +18,7 @@ const countdownUnits = [
   ["seconds", "Seconds"],
 ];
 
-const storyPanelCount = 8;
+const storyPanelCount = 7;
 
 function getRemainingTime(targetDate) {
   const distance = Math.max(targetDate.getTime() - Date.now(), 0);
@@ -55,6 +55,8 @@ function StorySection({
   className = "",
   amount = 0.32,
   showScrollCue = true,
+  countdown,
+  remaining,
 }) {
   return (
     <motion.section
@@ -63,14 +65,14 @@ function StorySection({
       whileInView={sectionMotion.whileInView}
       viewport={{ once: true, amount }}
     >
+      {countdown && remaining && (
+        <PanelCountdown countdown={countdown} remaining={remaining} />
+      )}
+
       {children}
 
       {showScrollCue && (
         <div className="video-scroll-cue" aria-hidden="true">
-          <span className="video-scroll-label">
-            Scroll to continue
-          </span>
-
           <span className="video-scroll-line">
             <span className="video-scroll-dot" />
           </span>
@@ -159,9 +161,9 @@ function HeroSection({ couple }) {
   );
 }
 
-function VerseSection({ invitation }) {
+function VerseSection({ invitation, countdown, remaining }) {
   return (
-    <StorySection amount={0.28}>
+    <StorySection amount={0.28} countdown={countdown} remaining={remaining}>
       <div className="section-card video-verse-card">
         <p className="video-verse">
           {invitation.verse.map((line) => (
@@ -178,9 +180,9 @@ function VerseSection({ invitation }) {
   );
 }
 
-function InvitationSection({ couple, invitation }) {
+function InvitationSection({ couple, invitation, countdown, remaining }) {
   return (
-    <StorySection amount={0.28}>
+    <StorySection amount={0.28} countdown={countdown} remaining={remaining}>
       <div className="video-copy-stack video-invitation-copy">
         <p className="video-blessing-lines">
           {invitation.gratitudeLines.map((line) => (
@@ -210,9 +212,9 @@ function InvitationSection({ couple, invitation }) {
   );
 }
 
-function EventSection({ event }) {
+function EventSection({ event, countdown, remaining }) {
   return (
-    <StorySection>
+    <StorySection countdown={countdown} remaining={remaining}>
       <div className="section-card event-card">
         <p className="event-eyebrow">{event.eyebrow}</p>
         <h2 className="event-title">{renderTitle(event.title)}</h2>
@@ -235,17 +237,17 @@ function EventSection({ event }) {
   );
 }
 
-function CeremonySection({ ceremony }) {
-  return <EventSection event={ceremony} />;
+function CeremonySection({ ceremony, countdown, remaining }) {
+  return <EventSection event={ceremony} countdown={countdown} remaining={remaining} />;
 }
 
-function PartySection({ party }) {
-  return <EventSection event={party} />;
+function PartySection({ party, countdown, remaining }) {
+  return <EventSection event={party} countdown={countdown} remaining={remaining} />;
 }
 
-function GiftRegistrySection({ giftRegistry }) {
+function GiftRegistrySection({ giftRegistry, countdown, remaining }) {
   return (
-    <StorySection>
+    <StorySection countdown={countdown} remaining={remaining}>
       <div className="section-card gift-card">
         <p className="event-eyebrow">{giftRegistry.eyebrow}</p>
         <h2 className="event-title">{renderTitle(giftRegistry.title)}</h2>
@@ -266,7 +268,7 @@ function GiftRegistrySection({ giftRegistry }) {
   );
 }
 
-function RsvpSection({ couple, rsvp }) {
+function RsvpSection({ couple, rsvp, countdown, remaining }) {
   const [selectedGuests, setSelectedGuests] = useState([]);
   const rsvpHref = `mailto:${rsvp.email}?subject=Wedding RSVP - ${
     couple.names
@@ -285,7 +287,7 @@ function RsvpSection({ couple, rsvp }) {
   }
 
   return (
-    <StorySection>
+    <StorySection countdown={countdown} remaining={remaining}>
       <div className="section-card rsvp-card">
         <p className="event-eyebrow">{rsvp.eyebrow}</p>
         <h2 className="rsvp-title">{rsvp.title}</h2>
@@ -324,21 +326,25 @@ function RsvpSection({ couple, rsvp }) {
   );
 }
 
-function CountdownSection({ countdown }) {
-  const remaining = useCountdown(countdown.target);
+function PanelCountdown({ countdown, remaining }) {
+  const readableCountdown = countdownUnits
+    .map(([key, label]) => `${remaining[key]} ${label.toLowerCase()}`)
+    .join(", ");
 
   return (
-    <StorySection className="video-countdown-panel"   showScrollCue={false}>
-      <p className="countdown-heading">{countdown.label}</p>
-      <div className="countdown-grid">
+    <div
+      className="panel-countdown"
+      aria-label={`${countdown.label} ${readableCountdown}`}
+    >
+      <span className="panel-countdown__units">
         {countdownUnits.map(([key, label]) => (
-          <div className="countdown-item" key={key}>
+          <span className="panel-countdown__unit" key={key}>
             <strong>{formatCountdownValue(remaining[key])}</strong>
-            <span>{label}</span>
-          </div>
+            <span>{label[0]}</span>
+          </span>
         ))}
-      </div>
-    </StorySection>
+      </span>
+    </div>
   );
 }
 
@@ -364,6 +370,7 @@ export default function InvitationCard() {
     countdown,
   } = invitationContent;
   const [activePanelIndex, setActivePanelIndex] = useState(0);
+  const remaining = useCountdown(countdown.target);
 
   function handleStoryScroll(event) {
     const { scrollTop, clientHeight } = event.currentTarget;
@@ -393,13 +400,34 @@ export default function InvitationCard() {
 
       <div className="story-scroll" onScroll={handleStoryScroll}>
         <HeroSection couple={couple} />
-        <VerseSection invitation={invitation} />
-        <InvitationSection couple={couple} invitation={invitation} />
-        <CeremonySection ceremony={ceremony} />
-        <PartySection party={party} />
-        <GiftRegistrySection giftRegistry={giftRegistry} />
-        <RsvpSection couple={couple} rsvp={rsvp} />
-        <CountdownSection countdown={countdown} />
+        <VerseSection
+          invitation={invitation}
+          countdown={countdown}
+          remaining={remaining}
+        />
+        <InvitationSection
+          couple={couple}
+          invitation={invitation}
+          countdown={countdown}
+          remaining={remaining}
+        />
+        <CeremonySection
+          ceremony={ceremony}
+          countdown={countdown}
+          remaining={remaining}
+        />
+        <PartySection party={party} countdown={countdown} remaining={remaining} />
+        <GiftRegistrySection
+          giftRegistry={giftRegistry}
+          countdown={countdown}
+          remaining={remaining}
+        />
+        <RsvpSection
+          couple={couple}
+          rsvp={rsvp}
+          countdown={countdown}
+          remaining={remaining}
+        />
       </div>
 
       <StoryProgress activeIndex={activePanelIndex} />
