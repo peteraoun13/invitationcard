@@ -5,14 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/TheWeddingSignature-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <meta
       name="description"
       content="A premium interactive wedding invitation experience."
     />
     <title>J & H Wedding Invitation</title>
+    <style>
+      @font-face {
+        font-family: "The Signature Wedding";
+        src: url("/fonts/TheWeddingSignature-Regular.ttf") format("truetype");
+        font-display: fallback;
+        font-style: normal;
+        font-weight: 400;
+      }
+
+      html,
+      body,
+      #root {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background: #f7f4f1;
+      }
+
+      .initial-loading-screen {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #5f594b;
+        text-align: center;
+        background:
+          radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.82), transparent 44%),
+          linear-gradient(180deg, #f9f6f2 0%, #f1e9dc 100%);
+      }
+
+      .initial-loading-screen__inner {
+        display: grid;
+        gap: 14px;
+        justify-items: center;
+      }
+
+      .initial-loading-screen__mark {
+        margin: 0;
+        color: #665f4f;
+        font-family: "The Signature Wedding", "Pinyon Script", "Palatino Linotype", Georgia, serif;
+        font-size: clamp(4rem, 17vw, 6.5rem);
+        font-weight: 400;
+        line-height: 0.78;
+      }
+
+      .initial-loading-screen__copy {
+        margin: 0;
+        color: rgba(95, 89, 75, 0.72);
+        font-family: "Cormorant Garamond", "Palatino Linotype", Georgia, serif;
+        font-size: 0.9rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="initial-loading-screen">
+        <div class="initial-loading-screen__inner">
+          <p class="initial-loading-screen__mark">J &amp; H</p>
+          <p class="initial-loading-screen__copy">Loading invitation...</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

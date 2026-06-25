@@ -36,33 +36,67 @@ const musicSources = {
 
 export default function App() {
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const musicRef = useRef(null);
   const hasMusic = Boolean(musicSources.mp3 || musicSources.m4a || musicSources.ogg);
 
   useEffect(() => {
-    const coverVideo = invitationContent.assets.coverVideo;
+    let isMounted = true;
+    const minimumDelay = new Promise((resolve) => window.setTimeout(resolve, 520));
+    const maximumDelay = new Promise((resolve) => window.setTimeout(resolve, 1700));
 
-    if (!coverVideo) return;
+    const fontWarmup =
+      "fonts" in document
+        ? Promise.allSettled([
+            document.fonts.load('400 1em "The Signature Wedding"'),
+            document.fonts.load('400 1em "Cormorant Garamond"'),
+          ])
+        : Promise.resolve();
 
-    // Warm up the looping cover video while the envelope intro is showing.
-    // This keeps the card from flashing the still fallback before video starts.
-    const preloadLink = document.createElement("link");
-    preloadLink.rel = "preload";
-    preloadLink.as = "video";
-    preloadLink.href = coverVideo;
-    preloadLink.type = "video/mp4";
-    document.head.appendChild(preloadLink);
+    Promise.race([
+      Promise.allSettled([minimumDelay, fontWarmup]),
+      maximumDelay,
+    ]).then(() => {
+      if (isMounted) {
+        setIsInitialLoading(false);
+      }
+    });
 
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const { coverPhoto, coverVideo } = invitationContent.assets;
+    const preloadLinks = [];
+
+    if (coverPhoto) {
+      const posterLink = document.createElement("link");
+      posterLink.rel = "preload";
+      posterLink.as = "image";
+      posterLink.href = coverPhoto;
+      document.head.appendChild(posterLink);
+      preloadLinks.push(posterLink);
+    }
+
+    if (!coverVideo) {
+      return () => {
+        preloadLinks.forEach((link) => link.remove());
+      };
+    }
+
+    // Warm only the metadata so the poster and UI stay responsive on weak mobile data.
     const video = document.createElement("video");
     video.muted = true;
     video.playsInline = true;
-    video.preload = "auto";
+    video.preload = "metadata";
     video.src = coverVideo;
     video.load();
 
     return () => {
-      preloadLink.remove();
+      preloadLinks.forEach((link) => link.remove());
       video.removeAttribute("src");
       video.load();
     };
@@ -183,6 +217,25 @@ export default function App() {
           </span>
         </motion.button>
       )}
+
+      <AnimatePresence>
+        {isInitialLoading && (
+          <motion.div
+            className="app-loading-screen"
+            aria-live="polite"
+            initial={{ opacity: 1 }}
+            exit={{
+              opacity: 0,
+              transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+            }}
+          >
+            <div className="app-loading-screen__inner">
+              <p className="app-loading-screen__mark">J &amp; H</p>
+              <p className="app-loading-screen__copy">Loading invitation...</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

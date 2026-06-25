@@ -36,6 +36,7 @@ export default function InvitationCard() {
     [wedding.countdownTarget],
   );
   const [remaining, setRemaining] = useState(() => getRemainingTime(weddingDate));
+  const [videoReady, setVideoReady] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [activePanelIndex, setActivePanelIndex] = useState(0);
 const [selectedGuests, setSelectedGuests] = useState([]);
@@ -54,6 +55,9 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
     .join("\n")}\n\nThank you.`,
 )}`;
   const hasVideo = Boolean(assets.coverVideo) && !videoFailed;
+  const posterStyle = assets.coverPhoto
+    ? { "--video-poster-image": `url("${assets.coverPhoto}")` }
+    : undefined;
 
   useEffect(() => {
     const tick = () => setRemaining(getRemainingTime(weddingDate));
@@ -73,6 +77,16 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
     });
   }
 
+  function handleVideoReady() {
+    setVideoReady(true);
+    playCoverVideo();
+  }
+
+  function handleVideoError() {
+    setVideoReady(false);
+    setVideoFailed(true);
+  }
+
   function handleStoryScroll(event) {
     const { scrollTop, clientHeight } = event.currentTarget;
     const nextIndex = Math.min(
@@ -87,23 +101,28 @@ const rsvpHref = `mailto:rsvp@example.com?subject=Wedding RSVP - ${couple.names}
 
   return (
     <div className="invitation-page video-invite-page">
-      {hasVideo ? (
+      <div
+        className="video-poster-bg"
+        style={posterStyle}
+        aria-hidden="true"
+      />
+
+      {hasVideo && (
         <video
           ref={videoRef}
-          className="video-invite-bg"
+          className={`video-invite-bg ${videoReady ? "is-ready" : ""}`}
           src={assets.coverVideo}
+          poster={assets.coverPhoto || undefined}
           autoPlay
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           controls={false}
-          onLoadedData={playCoverVideo}
-          onCanPlay={playCoverVideo}
-          onError={() => setVideoFailed(true)}
+          onLoadedData={handleVideoReady}
+          onCanPlay={handleVideoReady}
+          onError={handleVideoError}
         />
-      ) : (
-        <div className="video-invite-fallback" aria-hidden="true" />
       )}
 
       <div className="video-invite-overlay" aria-hidden="true" />

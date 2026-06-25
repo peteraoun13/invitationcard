@@ -74,4 +74,5 @@ rsvpButtonLabel: "Reserve",
     rsvpUrl: "mailto:rsvp@example.com",
     guests: ["Hala", "Jad", "Maya", "Karim", "Nour"],
   },
+  
 };
