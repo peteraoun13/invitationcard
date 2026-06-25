@@ -112,15 +112,34 @@ export default function App() {
     };
   }, [isInvitationOpen]);
 
+  async function primeMusic() {
+    const music = musicRef.current;
+
+    if (!music) return;
+
+    try {
+      music.muted = true;
+      music.volume = 0;
+      music.currentTime = 0;
+      await music.play();
+    } catch {
+      // If the browser refuses the silent warmup, try again when the intro ends.
+    }
+  }
+
   async function startMusic() {
     const music = musicRef.current;
 
     if (!music) return;
 
     try {
-      music.muted = isMusicMuted;
       music.volume = 0.68;
-      await music.play();
+      music.currentTime = 0;
+      music.muted = isMusicMuted;
+
+      if (music.paused) {
+        await music.play();
+      }
     } catch {
       // If mobile blocks audio or the file is missing, the invitation still opens.
     }
@@ -162,6 +181,7 @@ export default function App() {
           >
             <EnvelopeIntro
               onComplete={handleIntroComplete}
+              onPrimeMusic={primeMusic}
               onStartMusic={startMusic}
             />
           </motion.section>

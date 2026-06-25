@@ -26,7 +26,7 @@ const assets = {
   openingWebm: getOptionalAsset("opening-video.webm"),
 };
 
-export default function EnvelopeIntro({ onComplete, onStartMusic }) {
+export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }) {
   const videoRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [imageFailed, setImageFailed] = useState(false);
@@ -41,14 +41,15 @@ export default function EnvelopeIntro({ onComplete, onStartMusic }) {
     if (status === "complete") return;
 
     setStatus("complete");
+    onStartMusic?.();
     window.setTimeout(onComplete, 920);
   }
 
   async function startOpening() {
     if (status !== "idle") return;
 
-    // Start music from this real tap/click so mobile browsers allow playback.
-    onStartMusic?.();
+    // Prepare the song silently from this tap, then let it become audible after the video.
+    onPrimeMusic?.();
     setStatus("playing");
 
     if (!hasVideo) {

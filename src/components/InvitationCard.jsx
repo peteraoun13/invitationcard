@@ -50,8 +50,12 @@ function useCountdown(target) {
 
   return remaining;
 }
-
-function StorySection({ children, className = "", amount = 0.32 }) {
+function StorySection({
+  children,
+  className = "",
+  amount = 0.32,
+  showScrollCue = true,
+}) {
   return (
     <motion.section
       className={`video-invite-panel ${className}`.trim()}
@@ -60,6 +64,18 @@ function StorySection({ children, className = "", amount = 0.32 }) {
       viewport={{ once: true, amount }}
     >
       {children}
+
+      {showScrollCue && (
+        <div className="video-scroll-cue" aria-hidden="true">
+          <span className="video-scroll-label">
+            Scroll to continue
+          </span>
+
+          <span className="video-scroll-line">
+            <span className="video-scroll-dot" />
+          </span>
+        </div>
+      )}
     </motion.section>
   );
 }
@@ -123,10 +139,9 @@ function HeroSection({ couple }) {
   return (
     <section className="video-invite-panel video-invite-hero">
       <motion.div
-       initial={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
         animate={{
           opacity: 1,
-      
           transition: { delay: 0.18, duration: 1, ease: [0.22, 1, 0.36, 1] },
         }}
       >
@@ -313,7 +328,7 @@ function CountdownSection({ countdown }) {
   const remaining = useCountdown(countdown.target);
 
   return (
-    <StorySection className="video-countdown-panel">
+    <StorySection className="video-countdown-panel"   showScrollCue={false}>
       <p className="countdown-heading">{countdown.label}</p>
       <div className="countdown-grid">
         {countdownUnits.map(([key, label]) => (
