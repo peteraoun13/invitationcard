@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { motion } from "framer-motion";
 import { invitationContent } from "../data/invitationContent.js";
 
@@ -19,6 +26,16 @@ const countdownUnits = [
 ];
 
 const storyPanelCount = 7;
+const storyPanelCountWithoutRsvp = 6;
+
+const initialRsvpActionState = {
+  ok: false,
+  message: "",
+};
+
+async function fallbackRsvpAction() {
+  return initialRsvpActionState;
+}
 
 function getRemainingTime(targetDate) {
   const distance = Math.max(targetDate.getTime() - Date.now(), 0);
@@ -82,13 +99,90 @@ function renderTitle(title) {
     : title;
 }
 
-function BackgroundMedia({ assets }) {
+function BackgroundMedia({ assets, onPosterReady }) {
+  const [previewReady, setPreviewReady] = useState(false);
+  const [posterReady, setPosterReady] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
-  const hasVideo = Boolean(assets.coverVideo) && !videoFailed;
-  const posterStyle = assets.coverPhoto
-    ? { "--video-poster-image": `url("${assets.coverPhoto}")` }
-    : undefined;
+  const readyNotifiedRef = useRef(false);
+  const hasVideoSource = Boolean(assets.coverVideo);
+  const hasPoster = Boolean(assets.coverPreview || assets.coverPhoto);
+  const hasVideo = hasVideoSource && !videoFailed;
+  const hasAnyPosterReady = previewReady || posterReady;
+  const posterStyle = {
+    ...(assets.coverPreview
+      ? { "--video-poster-preview": `url("${assets.coverPreview}")` }
+      : {}),
+    ...(assets.coverPhoto
+      ? { "--video-poster-image": `url("${assets.coverPhoto}")` }
+      : {}),
+  };
+
+  const notifyBackgroundReady = useCallback(() => {
+    if (readyNotifiedRef.current) {
+      return;
+    }
+
+    readyNotifiedRef.current = true;
+    onPosterReady?.();
+  }, [onPosterReady]);
+
+  useEffect(() => {
+    if (!hasPoster && !hasVideoSource) {
+      notifyBackgroundReady();
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      notifyBackgroundReady();
+    }, 4600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasPoster, hasVideoSource, notifyBackgroundReady]);
+
+  useEffect(() => {
+    if (videoReady) {
+      notifyBackgroundReady();
+      return undefined;
+    }
+
+    if (hasAnyPosterReady && (!hasVideoSource || videoFailed)) {
+      notifyBackgroundReady();
+      return undefined;
+    }
+
+    if (hasAnyPosterReady && hasVideoSource && !videoFailed) {
+      const posterFallbackTimeoutId = window.setTimeout(() => {
+        notifyBackgroundReady();
+      }, 1650);
+
+      return () => window.clearTimeout(posterFallbackTimeoutId);
+    }
+
+    return undefined;
+  }, [
+    hasAnyPosterReady,
+    hasVideoSource,
+    notifyBackgroundReady,
+    videoFailed,
+    videoReady,
+  ]);
+
+  function handlePreviewReady() {
+    if (previewReady) {
+      return;
+    }
+
+    setPreviewReady(true);
+  }
+
+  function handlePosterReady() {
+    if (posterReady) {
+      return;
+    }
+
+    setPosterReady(true);
+  }
 
   function playVideo(event) {
     const video = event.currentTarget;
@@ -97,14 +191,47 @@ function BackgroundMedia({ assets }) {
     });
   }
 
-  function handleVideoReady(event) {
-    setVideoReady(true);
+  function handleVideoCanPlay(event) {
     playVideo(event);
+  }
+
+  function handleVideoPlaying() {
+    setVideoReady(true);
   }
 
   return (
     <>
       <div className="video-poster-bg" style={posterStyle} aria-hidden="true" />
+
+      {assets.coverPreview && (
+        <img
+          className={`video-poster-preview ${previewReady ? "is-ready" : ""}`}
+          src={assets.coverPreview}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+          onLoad={handlePreviewReady}
+          onError={handlePreviewReady}
+        />
+      )}
+
+      {assets.coverPhoto && (
+        <img
+          className={`video-poster-img ${posterReady ? "is-ready" : ""}`}
+          src={assets.coverPhoto}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+          onLoad={handlePosterReady}
+          onError={handlePosterReady}
+        />
+      )}
 
       {hasVideo && (
         <video
@@ -117,8 +244,9 @@ function BackgroundMedia({ assets }) {
           playsInline
           preload="metadata"
           controls={false}
-          onLoadedData={handleVideoReady}
-          onCanPlay={handleVideoReady}
+          onLoadedData={handleVideoCanPlay}
+          onCanPlay={handleVideoCanPlay}
+          onPlaying={handleVideoPlaying}
           onError={() => {
             setVideoReady(false);
             setVideoFailed(true);
@@ -131,7 +259,23 @@ function BackgroundMedia({ assets }) {
   );
 }
 
-function HeroSection({ couple }) {
+function LanguageToggle({ language, onToggleLanguage, label }) {
+  return (
+    <button
+      type="button"
+      className="language-toggle"
+      dir="ltr"
+      aria-label={label}
+      onClick={onToggleLanguage}
+    >
+      <span className={language === "en" ? "is-active" : ""}>EN</span>
+      <span aria-hidden="true">|</span>
+      <span className={language === "fr" ? "is-active" : ""}>FR</span>
+    </button>
+  );
+}
+
+function HeroSection({ couple, ui }) {
   return (
     <section className="video-invite-panel video-invite-hero">
       <motion.div
@@ -145,7 +289,7 @@ function HeroSection({ couple }) {
       </motion.div>
 
       <div className="video-scroll-cue" aria-hidden="true">
-        <span className="video-scroll-label">Scroll to continue</span>
+        <span className="video-scroll-label">{ui.scrollLabel}</span>
         <span className="video-scroll-line">
           <span className="video-scroll-dot" />
         </span>
@@ -159,9 +303,11 @@ function VerseSection({ invitation }) {
     <StorySection amount={0.28}>
       <div className="section-card video-verse-card">
         <p className="video-verse">
-          {invitation.verse.map((line) => (
+          {invitation.verse.map((line, index) => (
             <span
-              className={line.includes("Corinthians") ? "video-verse-citation" : ""}
+              className={
+                index === invitation.verse.length - 1 ? "video-verse-citation" : ""
+              }
               key={line}
             >
               {line}
@@ -205,7 +351,7 @@ function InvitationSection({ couple, invitation }) {
   );
 }
 
-function EventSection({ event }) {
+function EventSection({ event, ui }) {
   return (
     <StorySection>
       <div className="section-card event-card">
@@ -223,24 +369,24 @@ function EventSection({ event }) {
           rel="noreferrer"
         >
           <span className="location-pin" aria-hidden="true" />
-          <span>View Location</span>
+          <span>{ui.locationLabel}</span>
         </a>
       </div>
     </StorySection>
   );
 }
 
-function CeremonySection({ ceremony }) {
-  return <EventSection event={ceremony} />;
+function CeremonySection({ ceremony, ui }) {
+  return <EventSection event={ceremony} ui={ui} />;
 }
 
-function PartySection({ party }) {
-  return <EventSection event={party} />;
+function PartySection({ party, ui }) {
+  return <EventSection event={party} ui={ui} />;
 }
 
-function GiftRegistrySection({ giftRegistry }) {
+function GiftRegistrySection({ giftRegistry, showScrollCue = true }) {
   return (
-    <StorySection>
+    <StorySection showScrollCue={showScrollCue}>
       <div className="section-card gift-card">
         <p className="event-eyebrow">{giftRegistry.eyebrow}</p>
         <h2 className="event-title">{renderTitle(giftRegistry.title)}</h2>
@@ -261,67 +407,154 @@ function GiftRegistrySection({ giftRegistry }) {
   );
 }
 
-function RsvpSection({ couple, rsvp }) {
-  const [selectedGuests, setSelectedGuests] = useState([]);
-  const rsvpHref = `mailto:${rsvp.email}?subject=Wedding RSVP - ${
+function RsvpSection({
+  couple,
+  rsvp,
+  ui,
+  rsvpGuests,
+  rsvpSubmitted = false,
+  submitRsvpAction,
+  onRsvpSubmitted,
+}) {
+  const hasDynamicGuests = Array.isArray(rsvpGuests);
+  const guests = useMemo(
+    () =>
+      hasDynamicGuests
+        ? rsvpGuests.map((guest) => ({
+            id: guest.id,
+            name: guest.guest_name,
+            attending: guest.attending,
+          }))
+        : rsvp.guests.map((guestName) => ({
+            id: guestName,
+            name: guestName,
+            attending: null,
+          })),
+    [hasDynamicGuests, rsvp.guests, rsvpGuests],
+  );
+  const [selectedGuests, setSelectedGuests] = useState(() =>
+    guests.filter((guest) => guest.attending === true).map((guest) => guest.id),
+  );
+  const [rsvpState, formAction] = useActionState(
+    submitRsvpAction || fallbackRsvpAction,
+    initialRsvpActionState,
+  );
+  const isDatabaseRsvp = Boolean(submitRsvpAction);
+  const isSubmitted = rsvpSubmitted || rsvpState.ok;
+  const selectedGuestNames = guests
+    .filter((guest) => selectedGuests.includes(guest.id))
+    .map((guest) => guest.name);
+  const rsvpHref = `mailto:${rsvp.email}?subject=${ui.rsvpSubject} - ${
     couple.names
   }&body=${encodeURIComponent(
-    `Hello,\n\nWe confirm our presence for:\n${selectedGuests
+    `${ui.rsvpGreeting},\n\n${ui.rsvpBodyIntro}\n${selectedGuestNames
       .map((name) => `- ${name}`)
-      .join("\n")}\n\nThank you.`,
+      .join("\n")}\n\n${ui.rsvpThanks}`,
   )}`;
 
-  function toggleGuest(guest) {
+  function toggleGuest(guestId) {
+    if (isSubmitted) {
+      return;
+    }
+
     setSelectedGuests((current) =>
-      current.includes(guest)
-        ? current.filter((name) => name !== guest)
-        : [...current, guest],
+      current.includes(guestId)
+        ? current.filter((currentGuestId) => currentGuestId !== guestId)
+        : [...current, guestId],
     );
   }
 
+  useEffect(() => {
+    if (rsvpState.ok) {
+      onRsvpSubmitted?.(rsvpState.message);
+    }
+  }, [onRsvpSubmitted, rsvpState.message, rsvpState.ok]);
+
+  useEffect(() => {
+    if (!rsvpSubmitted) {
+      return;
+    }
+
+    setSelectedGuests(
+      guests.filter((guest) => guest.attending === true).map((guest) => guest.id),
+    );
+  }, [guests, rsvpSubmitted]);
+
   return (
     <StorySection showScrollCue={false}>
-      <div className="section-card rsvp-card">
+      <form
+        action={isDatabaseRsvp ? formAction : undefined}
+        className="section-card rsvp-card"
+      >
         <p className="event-eyebrow">{rsvp.eyebrow}</p>
         <h2 className="rsvp-title">{rsvp.title}</h2>
         <span className="event-rule" aria-hidden="true" />
         <p className="rsvp-line">{rsvp.line}</p>
 
+        {selectedGuests.map((guestId) => (
+          <input type="hidden" name="guestIds" value={guestId} key={guestId} />
+        ))}
+
         <div className="guest-list" aria-label="Guest names">
-          {rsvp.guests.map((guest) => {
-            const isSelected = selectedGuests.includes(guest);
+          {guests.map((guest) => {
+            const isSelected = selectedGuests.includes(guest.id);
 
             return (
               <button
                 type="button"
-                className={`guest-row ${isSelected ? "is-selected" : ""}`}
-                onClick={() => toggleGuest(guest)}
-                key={guest}
+                className={`guest-row ${isSelected ? "is-selected" : ""} ${
+                  isSubmitted ? "is-locked" : ""
+                }`}
+                disabled={isSubmitted}
+                onClick={() => toggleGuest(guest.id)}
+                key={guest.id}
               >
                 <span className="guest-square" aria-hidden="true" />
-                <span>{guest}</span>
+                <span>{guest.name}</span>
               </button>
             );
           })}
         </div>
 
-        <a
-          className={`event-button rsvp-reserve ${
-            selectedGuests.length === 0 ? "is-disabled" : ""
-          }`}
-          href={selectedGuests.length > 0 ? rsvpHref : undefined}
-          aria-disabled={selectedGuests.length === 0}
-        >
-          <span>{rsvp.buttonLabel}</span>
-        </a>
-      </div>
+        {isSubmitted && (
+          <div className="rsvp-confirmation" role="status">
+            <span className="rsvp-confirmation__rule" aria-hidden="true" />
+            <p>With gratitude</p>
+            <small>Your response has been reserved.</small>
+          </div>
+        )}
+
+        {!isSubmitted && isDatabaseRsvp ? (
+          <button type="submit" className="event-button rsvp-reserve">
+            <span>{rsvp.buttonLabel}</span>
+          </button>
+        ) : null}
+
+        {!isSubmitted && !isDatabaseRsvp ? (
+          <a
+            className={`event-button rsvp-reserve ${
+              selectedGuests.length === 0 ? "is-disabled" : ""
+            }`}
+            href={selectedGuests.length > 0 ? rsvpHref : undefined}
+            aria-disabled={selectedGuests.length === 0}
+          >
+            <span>{rsvp.buttonLabel}</span>
+          </a>
+        ) : null}
+
+        {!rsvpState.ok && rsvpState.message && (
+          <p className="rsvp-error" role="alert">
+            {rsvpState.message}
+          </p>
+        )}
+      </form>
     </StorySection>
   );
 }
 
 function PanelCountdown({ countdown, remaining }) {
   const readableCountdown = countdownUnits
-    .map(([key, label]) => `${remaining[key]} ${label.toLowerCase()}`)
+    .map(([key]) => `${remaining[key]} ${countdown.ariaUnits[key]}`)
     .join(", ");
 
   return (
@@ -333,7 +566,7 @@ function PanelCountdown({ countdown, remaining }) {
         {countdownUnits.map(([key, label]) => (
           <span className="panel-countdown__unit" key={key}>
             <strong>{formatCountdownValue(remaining[key])}</strong>
-            <span>{label[0]}</span>
+            <span>{countdown.unitLabels[key] || label[0]}</span>
           </span>
         ))}
       </span>
@@ -341,19 +574,30 @@ function PanelCountdown({ countdown, remaining }) {
   );
 }
 
-function StoryProgress({ activeIndex }) {
+function StoryProgress({ activeIndex, panelCount }) {
   return (
     <div className="video-story-progress" aria-hidden="true">
-      {Array.from({ length: storyPanelCount }, (_, index) => (
+      {Array.from({ length: panelCount }, (_, index) => (
         <span className={index === activeIndex ? "is-active" : ""} key={index} />
       ))}
     </div>
   );
 }
 
-export default function InvitationCard() {
+export default function InvitationCard({
+  language,
+  onToggleLanguage,
+  onBackgroundReady,
+  rsvpGuests,
+  hideRsvp = false,
+  rsvpSubmitted = false,
+  onRsvpSubmitted,
+  submitRsvpAction,
+}) {
+  const { assets, languages, defaultLanguage } = invitationContent;
+  const content = languages[language] || languages[defaultLanguage];
   const {
-    assets,
+    ui,
     couple,
     invitation,
     ceremony,
@@ -361,14 +605,26 @@ export default function InvitationCard() {
     giftRegistry,
     rsvp,
     countdown,
-  } = invitationContent;
+  } = content;
   const [activePanelIndex, setActivePanelIndex] = useState(0);
+  const [backgroundReady, setBackgroundReady] = useState(false);
+  const panelCount = hideRsvp ? storyPanelCountWithoutRsvp : storyPanelCount;
   const remaining = useCountdown(countdown.target);
+  const handleBackgroundReady = useCallback(() => {
+    setBackgroundReady(true);
+    onBackgroundReady?.();
+  }, [onBackgroundReady]);
+
+  useEffect(() => {
+    setActivePanelIndex((currentIndex) =>
+      Math.min(currentIndex, Math.max(0, panelCount - 1)),
+    );
+  }, [panelCount]);
 
   function handleStoryScroll(event) {
     const { scrollTop, clientHeight } = event.currentTarget;
     const nextIndex = Math.min(
-      storyPanelCount - 1,
+      panelCount - 1,
       Math.max(0, Math.round(scrollTop / clientHeight)),
     );
 
@@ -378,33 +634,59 @@ export default function InvitationCard() {
   }
 
   return (
-    <div className="invitation-page video-invite-page">
-      <BackgroundMedia assets={assets} />
+    <div
+      className={`invitation-page video-invite-page ${
+        backgroundReady ? "is-background-ready" : ""
+      }`}
+      dir={content.dir}
+      lang={language}
+    >
+      <BackgroundMedia
+        assets={assets}
+        onPosterReady={handleBackgroundReady}
+      />
 
       <motion.div
         className="site-reveal-wash"
         aria-hidden="true"
         initial={{ opacity: 1 }}
         animate={{
-          opacity: 0,
-          transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+          opacity: backgroundReady ? 0 : 1,
+          transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] },
         }}
       />
 
       <div className="story-scroll" onScroll={handleStoryScroll}>
-        <HeroSection couple={couple} />
+        <HeroSection couple={couple} ui={ui} />
         <VerseSection invitation={invitation} />
         <InvitationSection couple={couple} invitation={invitation} />
-        <CeremonySection ceremony={ceremony} />
-        <PartySection party={party} />
-        <GiftRegistrySection giftRegistry={giftRegistry} />
-        <RsvpSection couple={couple} rsvp={rsvp} />
+        <CeremonySection ceremony={ceremony} ui={ui} />
+        <PartySection party={party} ui={ui} />
+        <GiftRegistrySection giftRegistry={giftRegistry} showScrollCue={!hideRsvp} />
+        {!hideRsvp && (
+          <RsvpSection
+            couple={couple}
+            rsvp={rsvp}
+            ui={ui}
+            rsvpGuests={rsvpGuests}
+            rsvpSubmitted={rsvpSubmitted}
+            onRsvpSubmitted={onRsvpSubmitted}
+            submitRsvpAction={submitRsvpAction}
+          />
+        )}
       </div>
 
+      {activePanelIndex === 0 && (
+        <LanguageToggle
+          language={language}
+          label={ui.languageLabel}
+          onToggleLanguage={onToggleLanguage}
+        />
+      )}
       {activePanelIndex > 0 && (
         <PanelCountdown countdown={countdown} remaining={remaining} />
       )}
-      <StoryProgress activeIndex={activePanelIndex} />
+      <StoryProgress activeIndex={activePanelIndex} panelCount={panelCount} />
     </div>
   );
 }

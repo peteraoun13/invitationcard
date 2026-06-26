@@ -1,62 +1,168 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const assetModules = import.meta.glob(
-  [
-    "../assets/envelope-closed.png",
-    "../assets/opening-video.mp4",
-    "../assets/opening-video.webm",
-  ],
-  {
-    eager: true,
-    import: "default",
-    query: "?url",
-  },
-);
-
-function getOptionalAsset(fileName) {
-  return assetModules[`../assets/${fileName}`] ?? "";
-}
-
-const assets = {
-  // Change this file in src/assets/ if you want a different first frame.
-  envelopeClosed: getOptionalAsset("envelope-closed.png"),
-  // Change these files in src/assets/ when replacing the opening animation.
-  openingMp4: getOptionalAsset("opening-video.mp4"),
-  openingWebm: getOptionalAsset("opening-video.webm"),
+export const envelopeIntroAssets = {
+  // These live in public/ so the intro can load from stable, high-priority URLs.
+  envelopeClosed: "/envelope-closed.jpg",
+  openingMp4: "/opening-video.mp4",
+  openingWebm: "",
 };
 
-export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }) {
+export default function EnvelopeIntro({
+  envelopeReady = false,
+  onComplete,
+  onEnvelopeReady,
+  onOpeningVideoReady,
+  onPrepareInvitationMedia,
+  onPrimeMusic,
+  onStartMusic,
+}) {
   const videoRef = useRef(null);
+  const retryTimeoutRef = useRef(null);
+  const maxIntroTimeoutRef = useRef(null);
+  const isCompleteRef = useRef(false);
+  const hasStartedVideoRef = useRef(false);
+  const playStartedAtRef = useRef(0);
+  const videoReadyRef = useRef(false);
   const [status, setStatus] = useState("idle");
   const [imageFailed, setImageFailed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
-  const hasClosedImage = assets.envelopeClosed && !imageFailed;
-  const hasVideo = Boolean(assets.openingMp4 || assets.openingWebm);
+  const hasClosedImage =
+    Boolean(envelopeIntroAssets.envelopeClosed) &&
+    !imageFailed;
+  const hasVideo = Boolean(
+    envelopeIntroAssets.openingMp4 || envelopeIntroAssets.openingWebm,
+  ) && !videoFailed;
+  const isStarting = status === "starting";
   const isPlaying = status === "playing";
   const isComplete = status === "complete";
-  const showFallbackButton = status === "fallback";
+  const canOpen = hasClosedImage && envelopeReady && hasVideo && videoReady;
 
-  function finishIntro() {
-    if (status === "complete") return;
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(retryTimeoutRef.current);
+      window.clearTimeout(maxIntroTimeoutRef.current);
+    };
+  }, []);
 
-    setStatus("complete");
-    onStartMusic?.();
-    window.setTimeout(onComplete, 920);
-  }
+  useEffect(() => {
+    const video = videoRef.current;
 
-  async function startOpening() {
-    if (status !== "idle") return;
-
-    // Prepare the song silently from this tap, then let it become audible after the video.
-    onPrimeMusic?.();
-    setStatus("playing");
-
-    if (!hasVideo) {
-      // If opening-video.mp4/webm is missing, still let guests enter.
-      window.setTimeout(finishIntro, 520);
+    if (!video || !hasVideo) {
       return;
     }
+
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.load();
+  }, [hasVideo]);
+
+  function finishIntro() {
+    if (isCompleteRef.current || !hasStartedVideoRef.current) return;
+
+    const visiblePlaybackTime = window.performance.now() - playStartedAtRef.current;
+
+    if (visiblePlaybackTime < 900) {
+      window.clearTimeout(maxIntroTimeoutRef.current);
+      maxIntroTimeoutRef.current = window.setTimeout(finishIntro, 900 - visiblePlaybackTime);
+      return;
+    }
+
+    isCompleteRef.current = true;
+    window.clearTimeout(retryTimeoutRef.current);
+    window.clearTimeout(maxIntroTimeoutRef.current);
+    setStatus("complete");
+    onStartMusic?.();
+    window.setTimeout(onComplete, 460);
+  }
+
+  function handleVideoStarted() {
+    if (hasStartedVideoRef.current) {
+      return;
+    }
+
+    hasStartedVideoRef.current = true;
+    playStartedAtRef.current = window.performance.now();
+    window.clearTimeout(retryTimeoutRef.current);
+    window.clearTimeout(maxIntroTimeoutRef.current);
+    setStatus("playing");
+
+    const video = videoRef.current;
+    const duration = video?.duration;
+    const safetyTimeout = Number.isFinite(duration)
+      ? Math.min(Math.max(duration * 1000 + 1200, 4200), 12000)
+      : 9000;
+
+    maxIntroTimeoutRef.current = window.setTimeout(
+      finishIntro,
+      safetyTimeout,
+    );
+  }
+
+  function handleVideoReady() {
+    if (!videoReadyRef.current) {
+      videoReadyRef.current = true;
+      setVideoReady(true);
+      onOpeningVideoReady?.();
+    }
+
+    setVideoFailed(false);
+
+    if (isStarting) {
+      tryPlayOpeningVideo();
+    }
+  }
+
+  function tryPlayOpeningVideo(attempt = 0) {
+    const video = videoRef.current;
+
+    if (isCompleteRef.current || !video) {
+      return;
+    }
+
+    video.muted = true;
+    video.playsInline = true;
+
+    const playPromise = video.play();
+
+    if (!playPromise?.catch) {
+      return;
+    }
+
+    playPromise.then(handleVideoStarted).catch(() => {
+      if (isCompleteRef.current || hasStartedVideoRef.current) {
+        return;
+      }
+
+      retryTimeoutRef.current = window.setTimeout(() => {
+        if (attempt > 0) {
+          video.load();
+        }
+
+        tryPlayOpeningVideo(attempt + 1);
+      }, 520);
+    });
+  }
+
+  function handleVideoError() {
+    videoReadyRef.current = false;
+    setVideoFailed(true);
+    setVideoReady(false);
+    window.clearTimeout(retryTimeoutRef.current);
+    setStatus("idle");
+  }
+
+  function startOpening() {
+    if (status !== "idle" || !canOpen) return;
+
+    onPrimeMusic?.();
+    onPrepareInvitationMedia?.();
+    hasStartedVideoRef.current = false;
+    playStartedAtRef.current = 0;
+    setStatus("starting");
 
     const video = videoRef.current;
 
@@ -64,33 +170,29 @@ export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }
       if (!video) throw new Error("Opening video is not ready.");
 
       video.currentTime = 0;
-      await video.play();
+      tryPlayOpeningVideo();
     } catch {
-      // Mobile browsers can reject playback if the file is missing or blocked.
-      setStatus("fallback");
+      setStatus("idle");
     }
   }
 
   return (
     <div className="intro-screen" aria-label="Interactive envelope invitation">
       <div className="intro-media-frame">
-        {hasClosedImage ? (
+        {hasClosedImage && (
           <motion.img
             className="intro-media intro-media--image"
-            src={assets.envelopeClosed}
+            src={envelopeIntroAssets.envelopeClosed}
             alt="Closed wedding invitation envelope"
             draggable="false"
             animate={{
-              opacity: status === "idle" || showFallbackButton ? 1 : 0,
+              opacity: status === "idle" ? 1 : 0,
               scale: isPlaying ? 1.015 : 1,
             }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            onLoad={onEnvelopeReady}
             onError={() => setImageFailed(true)}
           />
-        ) : (
-          <div className="intro-media intro-media--placeholder">
-            {/* Replace src/assets/envelope-closed.png with the closed envelope image. */}
-          </div>
         )}
 
         {hasVideo && (
@@ -100,17 +202,21 @@ export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }
             muted
             playsInline
             preload="auto"
+            poster={envelopeIntroAssets.envelopeClosed}
             controls={false}
-            animate={{ opacity: isPlaying || isComplete ? 1 : 0 }}
-            transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+            animate={{ opacity: isStarting || isPlaying || isComplete ? 1 : 0 }}
+            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             onEnded={finishIntro}
-            onError={() => setStatus("fallback")}
+            onError={handleVideoError}
+            onLoadedData={handleVideoReady}
+            onCanPlay={handleVideoReady}
+            onPlaying={handleVideoStarted}
           >
-            {assets.openingWebm && (
-              <source src={assets.openingWebm} type="video/webm" />
+            {envelopeIntroAssets.openingWebm && (
+              <source src={envelopeIntroAssets.openingWebm} type="video/webm" />
             )}
-            {assets.openingMp4 && (
-              <source src={assets.openingMp4} type="video/mp4" />
+            {envelopeIntroAssets.openingMp4 && (
+              <source src={envelopeIntroAssets.openingMp4} type="video/mp4" />
             )}
           </motion.video>
         )}
@@ -120,11 +226,11 @@ export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }
         <motion.div
           className="intro-white-fade"
           aria-hidden="true"
-          animate={{ opacity: isComplete ? 1 : 0 }}
-          transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+          animate={{ opacity: isComplete ? 0.48 : 0 }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
         />
 
-        {status === "idle" && (
+        {status === "idle" && canOpen && (
           <motion.button
             type="button"
             className="wax-hotspot"
@@ -132,25 +238,15 @@ export default function EnvelopeIntro({ onComplete, onPrimeMusic, onStartMusic }
             onClick={startOpening}
             whileTap={{ scale: 0.92 }}
           >
-            {/* Change left/top/width/height in .wax-hotspot to move the wax click position. */}
             <motion.span
               className="wax-hotspot__pulse"
-              animate={{ opacity: [0.2, 0.55, 0.2], scale: [1, 1.16, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ opacity: [0.18, 0.52, 0.18], scale: [1, 1.16, 1] }}
+              transition={{
+                duration: 2.35,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
             />
-          </motion.button>
-        )}
-
-        {showFallbackButton && (
-          <motion.button
-            type="button"
-            className="intro-fallback-button"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            onClick={finishIntro}
-          >
-            Open Invitation
           </motion.button>
         )}
       </div>

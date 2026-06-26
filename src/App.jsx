@@ -1,261 +1,164 @@
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import EnvelopeIntro from "./components/EnvelopeIntro.jsx";
-import InvitationCard from "./components/InvitationCard.jsx";
-import { invitationContent } from "./data/invitationContent.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AdminShell, AdminStatus } from "./components/admin/AdminShell.jsx";
+import { AuthProvider, useAuth } from "./components/admin/AuthProvider.jsx";
+import InvitationExperience from "./components/InvitationExperience.jsx";
+import { isFirebaseConfigured } from "./lib/firebase";
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminLoginPage from "./pages/AdminLoginPage.jsx";
+import FamiliesPage from "./pages/FamiliesPage.jsx";
+import FamilyDetailPage from "./pages/FamilyDetailPage.jsx";
+import PublicInvitePage from "./pages/PublicInvitePage.jsx";
+import RsvpDashboardPage from "./pages/RsvpDashboardPage.jsx";
 
-const audioModules = import.meta.glob(
-  [
-    // Put your song in src/assets/ and name it song.mp3 for the default setup.
-    "./assets/song.mp3",
-    "./assets/song.m4a",
-    "./assets/song.ogg",
-    "./assets/wedding-song.mp3",
-    "./assets/background-music.mp3",
-  ],
-  {
-    eager: true,
-    import: "default",
-    query: "?url",
-  },
-);
+function normalizePath(pathname) {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
 
-function getOptionalAudio(fileName) {
-  return audioModules[`./assets/${fileName}`] ?? "";
+  return pathname || "/";
 }
 
-const musicSources = {
-  // Change the song file here if you want to use another asset name.
-  mp3:
-    getOptionalAudio("song.mp3") ||
-    getOptionalAudio("wedding-song.mp3") ||
-    getOptionalAudio("background-music.mp3"),
-  m4a: getOptionalAudio("song.m4a"),
-  ogg: getOptionalAudio("song.ogg"),
-};
-
-export default function App() {
-  const [isInvitationOpen, setIsInvitationOpen] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isMusicMuted, setIsMusicMuted] = useState(false);
-  const musicRef = useRef(null);
-  const hasMusic = Boolean(musicSources.mp3 || musicSources.m4a || musicSources.ogg);
+function useBrowserRoute() {
+  const [path, setPath] = useState(() => normalizePath(window.location.pathname));
 
   useEffect(() => {
-    let isMounted = true;
-    const minimumDelay = new Promise((resolve) => window.setTimeout(resolve, 520));
-    const maximumDelay = new Promise((resolve) => window.setTimeout(resolve, 1700));
-
-    const fontWarmup =
-      "fonts" in document
-        ? Promise.allSettled([
-            document.fonts.load('400 1em "The Signature Wedding"'),
-            document.fonts.load('400 1em "Cormorant Garamond"'),
-            document.fonts.load('500 1em "Cormorant Garamond"'),
-            document.fonts.load('600 1em "Cormorant Garamond"'),
-          ])
-        : Promise.resolve();
-
-    Promise.race([
-      Promise.allSettled([minimumDelay, fontWarmup]),
-      maximumDelay,
-    ]).then(() => {
-      if (isMounted) {
-        setIsInitialLoading(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const { coverPhoto, coverVideo } = invitationContent.assets;
-    const preloadLinks = [];
-
-    if (coverPhoto) {
-      const posterLink = document.createElement("link");
-      posterLink.rel = "preload";
-      posterLink.as = "image";
-      posterLink.href = coverPhoto;
-      document.head.appendChild(posterLink);
-      preloadLinks.push(posterLink);
+    function handlePopState() {
+      setPath(normalizePath(window.location.pathname));
     }
 
-    if (!coverVideo) {
-      return () => {
-        preloadLinks.forEach((link) => link.remove());
-      };
-    }
+    window.addEventListener("popstate", handlePopState);
 
-    // Warm only the metadata so the poster and UI stay responsive on weak mobile data.
-    const video = document.createElement("video");
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-    video.src = coverVideo;
-    video.load();
-
-    return () => {
-      preloadLinks.forEach((link) => link.remove());
-      video.removeAttribute("src");
-      video.load();
-    };
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  const navigate = useCallback((nextPath) => {
+    const normalizedPath = normalizePath(nextPath);
+
+    if (window.location.pathname !== normalizedPath) {
+      window.history.pushState({}, "", normalizedPath);
+    }
+
+    setPath(normalizedPath);
+    window.scrollTo({ top: 0 });
+  }, []);
+
+  return { path, navigate };
+}
+
+function FirebaseConfigStatus() {
+  return (
+    <AdminStatus
+      title="Firebase is not configured yet."
+      message="Add the Vite Firebase environment variables, then restart the dev server."
+    />
+  );
+}
+
+function ProtectedAdminRoute({ children, currentPath, navigate }) {
+  const { user, isLoading, error } = useAuth();
+
   useEffect(() => {
-    document.body.style.overflow = isInvitationOpen ? "auto" : "hidden";
+    document.body.style.overflow = "auto";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isInvitationOpen]);
+  }, []);
 
-  async function primeMusic() {
-    const music = musicRef.current;
-
-    if (!music) return;
-
-    try {
-      music.muted = true;
-      music.volume = 0;
-      music.currentTime = 0;
-      await music.play();
-    } catch {
-      // If the browser refuses the silent warmup, try again when the intro ends.
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/admin/login");
     }
+  }, [isLoading, navigate, user]);
+
+  if (isLoading) {
+    return <AdminStatus title="Loading admin..." />;
   }
 
-  async function startMusic() {
-    const music = musicRef.current;
-
-    if (!music) return;
-
-    try {
-      music.volume = 0.68;
-      music.currentTime = 0;
-      music.muted = isMusicMuted;
-
-      if (music.paused) {
-        await music.play();
-      }
-    } catch {
-      // If mobile blocks audio or the file is missing, the invitation still opens.
-    }
+  if (error) {
+    return <AdminStatus title="Could not load admin." message={error} />;
   }
 
-  function toggleMusicMute() {
-    const music = musicRef.current;
-    const nextMuted = !isMusicMuted;
-
-    setIsMusicMuted(nextMuted);
-
-    if (!music) return;
-
-    music.muted = nextMuted;
-
-    if (!nextMuted && music.paused) {
-      music.play().catch(() => {
-        // Keep the button responsive even if the browser refuses playback.
-      });
-    }
-  }
-
-  function handleIntroComplete() {
-    setIsInvitationOpen(true);
+  if (!user) {
+    return null;
   }
 
   return (
-    <main className={isInvitationOpen ? "app app--scrollable" : "app"}>
-      <AnimatePresence>
-        {!isInvitationOpen ? (
-          <motion.section
-            key="intro"
-            className="screen-layer"
-            initial={{ opacity: 1 }}
-            exit={{
-              opacity: 0,
-              transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-            }}
-          >
-            <EnvelopeIntro
-              onComplete={handleIntroComplete}
-              onPrimeMusic={primeMusic}
-              onStartMusic={startMusic}
-            />
-          </motion.section>
-        ) : (
-          <motion.section
-            key="invitation"
-            className="screen-layer screen-layer--flow"
-            initial={{ opacity: 1 }}
-            animate={{
-              opacity: 1,
-              transition: { duration: 0.01 },
-            }}
-          >
-            <InvitationCard />
-          </motion.section>
-        )}
-      </AnimatePresence>
-
-      {hasMusic && (
-        <audio ref={musicRef} preload="metadata" loop>
-          {/* Replace src/assets/song.mp3 with the wedding song you want. */}
-          {musicSources.ogg && <source src={musicSources.ogg} type="audio/ogg" />}
-          {musicSources.m4a && <source src={musicSources.m4a} type="audio/mp4" />}
-          {musicSources.mp3 && <source src={musicSources.mp3} type="audio/mpeg" />}
-        </audio>
-      )}
-
-      {isInvitationOpen && hasMusic && (
-        <motion.button
-          type="button"
-          className="music-toggle"
-          aria-label={isMusicMuted ? "Unmute music" : "Mute music"}
-          aria-pressed={isMusicMuted}
-          onClick={toggleMusicMute}
-          initial={{ opacity: 0, scale: 0.86, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          whileTap={{ scale: 0.92 }}
-          transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <span className="music-toggle__icon" aria-hidden="true">
-            {isMusicMuted ? (
-              <svg viewBox="0 0 24 24" role="img">
-                <path d="M4 9v6h4l5 4V5L8 9H4Z" />
-                <path d="m17 9 4 4m0-4-4 4" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" role="img">
-                <path d="M4 9v6h4l5 4V5L8 9H4Z" />
-                <path d="M16 8.5a5 5 0 0 1 0 7" />
-                <path d="M18.8 5.7a9 9 0 0 1 0 12.6" />
-              </svg>
-            )}
-          </span>
-        </motion.button>
-      )}
-
-      <AnimatePresence>
-        {isInitialLoading && (
-          <motion.div
-            className="app-loading-screen"
-            aria-live="polite"
-            initial={{ opacity: 1 }}
-            exit={{
-              opacity: 0,
-              transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
-            }}
-          >
-            <div className="app-loading-screen__inner">
-              <p className="app-loading-screen__mark">J &amp; H</p>
-              <p className="app-loading-screen__copy">Loading invitation...</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </main>
+    <AdminShell currentPath={currentPath} navigate={navigate}>
+      {children}
+    </AdminShell>
   );
+}
+
+function AdminRoutes({ path, navigate }) {
+  const familyDetailMatch = path.match(/^\/admin\/families\/([^/]+)$/);
+
+  if (path === "/admin/login") {
+    return <AdminLoginPage navigate={navigate} />;
+  }
+
+  if (path === "/admin/families") {
+    return (
+      <ProtectedAdminRoute currentPath="/admin/families" navigate={navigate}>
+        <FamiliesPage navigate={navigate} />
+      </ProtectedAdminRoute>
+    );
+  }
+
+  if (path === "/admin/rsvps") {
+    return (
+      <ProtectedAdminRoute currentPath="/admin/rsvps" navigate={navigate}>
+        <RsvpDashboardPage />
+      </ProtectedAdminRoute>
+    );
+  }
+
+  if (familyDetailMatch) {
+    return (
+      <ProtectedAdminRoute currentPath="/admin/families" navigate={navigate}>
+        <FamilyDetailPage
+          familyId={decodeURIComponent(familyDetailMatch[1])}
+          navigate={navigate}
+        />
+      </ProtectedAdminRoute>
+    );
+  }
+
+  return (
+    <ProtectedAdminRoute currentPath="/admin" navigate={navigate}>
+      <AdminDashboardPage navigate={navigate} />
+    </ProtectedAdminRoute>
+  );
+}
+
+export default function App() {
+  const { path, navigate } = useBrowserRoute();
+  const inviteToken = useMemo(() => {
+    const match = path.match(/^\/invite\/([^/]+)$/);
+    return match ? decodeURIComponent(match[1]) : "";
+  }, [path]);
+  const isAdminRoute = path === "/admin" || path.startsWith("/admin/");
+  const isInviteRoute = Boolean(inviteToken);
+
+  if (isAdminRoute) {
+    if (!isFirebaseConfigured) {
+      return <FirebaseConfigStatus />;
+    }
+
+    return (
+      <AuthProvider>
+        <AdminRoutes path={path} navigate={navigate} />
+      </AuthProvider>
+    );
+  }
+
+  if (isInviteRoute) {
+    if (!isFirebaseConfigured) {
+      return <FirebaseConfigStatus />;
+    }
+
+    return <PublicInvitePage token={inviteToken} />;
+  }
+
+  return <InvitationExperience />;
 }

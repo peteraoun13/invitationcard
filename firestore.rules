@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function publicCanAccessFamily(familyId) {
+      return exists(/databases/$(database)/documents/families/$(familyId))
+        && get(/databases/$(database)/documents/families/$(familyId)).data.inviteToken == familyId;
+    }
+
+    function publicFamilyStatusUpdateOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['openedAt', 'status', 'updatedAt'])
+        && request.resource.data.status in ['pending', 'opened']
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    match /{path=**}/guests/{guestId} {
+      allow read: if isAdmin();
+    }
+
+    match /families/{familyId} {
+      allow get: if isAdmin() || resource.data.inviteToken == familyId;
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.inviteToken == familyId
+        && request.resource.data.familyName is string;
+      allow update: if isAdmin()
+        || (publicCanAccessFamily(familyId) && publicFamilyStatusUpdateOnly());
+      allow delete: if isAdmin();
+
+      match /guests/{guestId} {
+        allow get, list: if isAdmin() || publicCanAccessFamily(familyId);
+        allow create, delete: if isAdmin();
+        allow update: if isAdmin()
+          || (
+            publicCanAccessFamily(familyId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['attending', 'responded', 'updatedAt'])
+            && request.resource.data.attending is bool
+            && request.resource.data.responded == true
+          );
+      }
+    }
+
+    match /rsvpSubmissions/{submissionId} {
+      allow create: if request.resource.data.keys()
+          .hasOnly(['familyId', 'inviteToken', 'submittedAt', 'responses'])
+        && request.resource.data.familyId is string
+        && request.resource.data.inviteToken == request.resource.data.familyId
+        && publicCanAccessFamily(request.resource.data.familyId)
+        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.responses is list
+        && request.resource.data.responses.size() <= 100;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

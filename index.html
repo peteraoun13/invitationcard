@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link
       rel="preload"
       href="/fonts/CormorantGaramond-Regular.ttf"
@@ -33,16 +36,61 @@
       type="font/ttf"
       crossorigin
     />
+    <link
+      rel="preload"
+      href="/envelope-closed.jpg"
+      as="image"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      href="/opening-video.mp4"
+      as="video"
+      type="video/mp4"
+    />
+    <link
+      rel="preload"
+      href="/cover-photo-preview.jpg"
+      as="image"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      href="/cover-photo.jpg"
+      as="image"
+    />
     <meta
       name="description"
-      content="A premium interactive wedding invitation experience."
+      content="Jad & Hala's Wedding Invitation."
     />
-    <title>J & H Wedding Invitation</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jad & Hala" />
+    <meta property="og:title" content="Jad &amp; Hala's Wedding" />
+    <meta property="og:description" content="Wedding Invitation" />
+    <meta property="og:url" content="%VITE_PUBLIC_SITE_URL%/" />
+    <meta
+      property="og:image"
+      content="%VITE_PUBLIC_SITE_URL%/social-preview.jpg"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="%VITE_PUBLIC_SITE_URL%/social-preview.jpg"
+    />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="Jad and Hala wedding invitation" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jad &amp; Hala's Wedding" />
+    <meta name="twitter:description" content="Wedding Invitation" />
+    <meta
+      name="twitter:image"
+      content="%VITE_PUBLIC_SITE_URL%/social-preview.jpg"
+    />
+    <title>Jad &amp; Hala's Wedding Invitation</title>
     <style>
       @font-face {
         font-family: "Cormorant Garamond";
         src: url("/fonts/CormorantGaramond-Regular.ttf") format("truetype");
-        font-display: fallback;
+        font-display: swap;
         font-style: normal;
         font-weight: 400;
       }
@@ -50,7 +98,7 @@
       @font-face {
         font-family: "Cormorant Garamond";
         src: url("/fonts/CormorantGaramond-Medium.ttf") format("truetype");
-        font-display: fallback;
+        font-display: swap;
         font-style: normal;
         font-weight: 500;
       }
@@ -58,7 +106,7 @@
       @font-face {
         font-family: "Cormorant Garamond";
         src: url("/fonts/CormorantGaramond-SemiBold.ttf") format("truetype");
-        font-display: fallback;
+        font-display: swap;
         font-style: normal;
         font-weight: 600;
       }
@@ -66,7 +114,7 @@
       @font-face {
         font-family: "The Signature Wedding";
         src: url("/fonts/TheWeddingSignature-Regular.ttf") format("truetype");
-        font-display: fallback;
+        font-display: swap;
         font-style: normal;
         font-weight: 400;
       }
@@ -88,34 +136,58 @@
         inset: 0;
         display: grid;
         place-items: center;
-        color: #5f594b;
+        color: #5d5144;
         text-align: center;
         background:
-          radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.82), transparent 44%),
-          linear-gradient(180deg, #f9f6f2 0%, #f1e9dc 100%);
+          radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.9), transparent 39%),
+          linear-gradient(180deg, #fbfaf7 0%, #eee6dc 100%);
       }
 
       .initial-loading-screen__inner {
         display: grid;
-        gap: 14px;
+        gap: clamp(13px, 2svh, 18px);
         justify-items: center;
+        padding: 24px;
       }
 
       .initial-loading-screen__mark {
         margin: 0;
-        color: #665f4f;
+        color: #5e5346;
         font-family: "The Signature Wedding", "Bickham Script Pro", "Edwardian Script ITC", Georgia, serif;
-        font-size: clamp(4rem, 17vw, 6.5rem);
+        font-size: clamp(4.8rem, 18vw, 7.4rem);
         font-weight: 400;
         line-height: 0.78;
+        text-shadow: 0 10px 34px rgba(83, 70, 55, 0.12);
+      }
+
+      .initial-loading-screen__rule {
+        position: relative;
+        display: block;
+        width: clamp(92px, 26vw, 148px);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(94, 83, 70, 0.42), transparent);
+      }
+
+      .initial-loading-screen__rule::after {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        content: "";
+        border-radius: 50%;
+        background: rgba(94, 83, 70, 0.58);
+        box-shadow: 0 0 18px rgba(94, 83, 70, 0.16);
+        transform: translate(-50%, -50%);
       }
 
       .initial-loading-screen__copy {
         margin: 0;
-        color: rgba(95, 89, 75, 0.72);
+        color: rgba(94, 83, 70, 0.64);
         font-family: "Cormorant Garamond", "Palatino Linotype", Georgia, serif;
-        font-size: 0.9rem;
-        letter-spacing: 0.18em;
+        font-size: clamp(0.72rem, 2.2vw, 0.88rem);
+        font-weight: 600;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
       }
     </style>
@@ -125,7 +197,8 @@
       <div class="initial-loading-screen">
         <div class="initial-loading-screen__inner">
           <p class="initial-loading-screen__mark">J &amp; H</p>
-          <p class="initial-loading-screen__copy">Loading invitation...</p>
+          <span class="initial-loading-screen__rule" aria-hidden="true"></span>
+          <p class="initial-loading-screen__copy">Preparing your experience</p>
         </div>
       </div>
     </div>
