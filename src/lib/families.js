@@ -59,7 +59,13 @@ function getStatusFromFamilyAndGuests(family, guests) {
   const respondedCount = guests.filter((guest) => guest.responded).length;
 
   if (respondedCount === guests.length) {
-    return "completed";
+    const attendingCount = guests.filter((guest) => guest.attending === true).length;
+
+    if (attendingCount === guests.length) {
+      return "completed";
+    }
+
+    return attendingCount === 0 ? "declined" : "partial";
   }
 
   if (respondedCount > 0) {
@@ -170,7 +176,11 @@ function summarizeFamily(family, guests) {
     guests.length === 0
       ? "pending"
       : pending === 0
-        ? "completed"
+        ? confirmed === guests.length
+          ? "completed"
+          : declined === guests.length
+            ? "declined"
+            : "partial"
         : hasResponses
           ? "partial"
           : family.openedAt || family.status === "opened"
@@ -182,6 +192,7 @@ function summarizeFamily(family, guests) {
     opened: "Opened",
     partial: "Partial",
     completed: "Completed",
+    declined: "Declined",
   };
 
   return {

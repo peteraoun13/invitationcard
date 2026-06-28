@@ -7,12 +7,13 @@ import {
   updateFamilyName,
   updateGuestName,
   updateGuestRsvpStatus,
-} from "../lib/families";
+} from "../services/backend";
 import PaginationControls, {
   getPageCount,
   getPaginatedItems,
 } from "../components/admin/PaginationControls.jsx";
-import { buildInviteLink } from "../lib/firebase";
+import ConfirmModal from "../components/admin/ConfirmModal.jsx";
+import { buildInviteLink } from "../services/backend";
 
 function formatDate(value) {
   const date = value?.toDate?.();
@@ -45,7 +46,15 @@ function getFamilyStatusDetails(family, guests) {
   }
 
   if (respondedCount === guests.length) {
-    return { code: "completed", label: "Completed" };
+    const attendingCount = guests.filter((guest) => guest.attending === true).length;
+
+    if (attendingCount === guests.length) {
+      return { code: "completed", label: "Completed" };
+    }
+
+    return attendingCount === 0
+      ? { code: "declined", label: "Declined" }
+      : { code: "partial", label: "Partial" };
   }
 
   if (respondedCount > 0) {
@@ -59,7 +68,7 @@ function getFamilyStatusDetails(family, guests) {
   return { code: "not_opened", label: "Not opened" };
 }
 
-function GuestTableRow({ familyId, guest }) {
+function GuestTableRow({ familyId, guest, onRequestDelete }) {
   const [name, setName] = useState(guest.name);
   const [responseStatus, setResponseStatus] = useState(getStatus(guest));
   const [isEditing, setIsEditing] = useState(false);
@@ -105,25 +114,6 @@ function GuestTableRow({ familyId, guest }) {
     setName(guest.name);
     setError("");
     setIsEditing(false);
-  }
-
-  async function removeGuest() {
-    const isConfirmed = window.confirm(`Delete ${guest.name || "this guest"}?`);
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    setError("");
-    setIsSaving(true);
-
-    try {
-      await deleteGuest(familyId, guest.id);
-    } catch (deleteError) {
-      setError(deleteError.message);
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   async function handleStatusChange(event) {
@@ -220,7 +210,7 @@ function GuestTableRow({ familyId, guest }) {
             className="admin-button admin-button--small admin-button--danger"
             disabled={isSaving}
             type="button"
-            onClick={removeGuest}
+            onClick={() => onRequestDelete(guest)}
           >
             Delete
           </button>
@@ -243,6 +233,10 @@ export default function FamilyDetailPage({ familyId, navigate }) {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [guestToDelete, setGuestToDelete] = useState(null);
+  const [isDeletingGuest, setIsDeletingGuest] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteNotice, setDeleteNotice] = useState("");
   const inviteLink = useMemo(
     () => (family ? buildInviteLink(family) : ""),
     [family],
@@ -362,6 +356,39 @@ export default function FamilyDetailPage({ familyId, navigate }) {
     }
   }
 
+  function requestGuestDelete(guest) {
+    setDeleteError("");
+    setDeleteNotice("");
+    setGuestToDelete(guest);
+  }
+
+  function cancelGuestDelete() {
+    if (!isDeletingGuest) {
+      setGuestToDelete(null);
+      setDeleteError("");
+    }
+  }
+
+  async function confirmGuestDelete() {
+    if (!guestToDelete || isDeletingGuest) {
+      return;
+    }
+
+    setDeleteError("");
+    setIsDeletingGuest(true);
+
+    try {
+      const deletedName = guestToDelete.name || "Guest";
+      await deleteGuest(familyId, guestToDelete.id);
+      setGuestToDelete(null);
+      setDeleteNotice(`${deletedName} was deleted successfully.`);
+    } catch (deleteFailure) {
+      setDeleteError(deleteFailure.message || "Could not delete this guest.");
+    } finally {
+      setIsDeletingGuest(false);
+    }
+  }
+
   if (isFamilyLoading) {
     return (
       <section className="admin-panel">
@@ -404,6 +431,12 @@ export default function FamilyDetailPage({ familyId, navigate }) {
       {error && (
         <p className="admin-alert admin-alert--error" role="alert">
           {error}
+        </p>
+      )}
+
+      {deleteNotice && (
+        <p className="admin-alert admin-alert--success" role="status">
+          {deleteNotice}
         </p>
       )}
 
@@ -531,7 +564,12 @@ export default function FamilyDetailPage({ familyId, navigate }) {
                 </thead>
                 <tbody>
                   {paginatedGuests.map((guest) => (
-                    <GuestTableRow familyId={familyId} guest={guest} key={guest.id} />
+                    <GuestTableRow
+                      familyId={familyId}
+                      guest={guest}
+                      key={guest.id}
+                      onRequestDelete={requestGuestDelete}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -546,6 +584,21 @@ export default function FamilyDetailPage({ familyId, navigate }) {
           </>
         )}
       </section>
+
+      <ConfirmModal
+        confirmLabel="Delete guest"
+        error={deleteError}
+        isLoading={isDeletingGuest}
+        isOpen={Boolean(guestToDelete)}
+        message={
+          guestToDelete
+            ? `This will permanently delete "${guestToDelete.name}" from this family. This action cannot be undone.`
+            : ""
+        }
+        onCancel={cancelGuestDelete}
+        onConfirm={confirmGuestDelete}
+        title="Delete guest?"
+      />
     </div>
   );
 }

@@ -6,10 +6,9 @@ import { invitationContent } from "../data/invitationContent.js";
 
 const audioModules = import.meta.glob(
   [
-    // Put your song in src/assets/ and name it song.mp3 for the default setup.
-    "../assets/song.mp3",
-    "../assets/song.m4a",
-    "../assets/song.ogg",
+    "../assets/song1.mp3",
+    "../assets/song1.m4a",
+    "../assets/song1.ogg",
     "../assets/wedding-song.mp3",
     "../assets/background-music.mp3",
   ],
@@ -34,13 +33,12 @@ function getOptionalAudio(fileName) {
 }
 
 const musicSources = {
-  // Change the song file here if you want to use another asset name.
   mp3:
-    getOptionalAudio("song.mp3") ||
+    getOptionalAudio("song1.mp3") ||
     getOptionalAudio("wedding-song.mp3") ||
     getOptionalAudio("background-music.mp3"),
-  m4a: getOptionalAudio("song.m4a"),
-  ogg: getOptionalAudio("song.ogg"),
+  m4a: getOptionalAudio("song1.m4a"),
+  ogg: getOptionalAudio("song1.ogg"),
 };
 
 function wait(milliseconds) {
@@ -380,7 +378,7 @@ export default function InvitationExperience({
 
       {hasMusic && (
         <audio ref={musicRef} preload="none" loop>
-          {/* Replace src/assets/song.mp3 with the wedding song you want. */}
+          {/* The wedding song sources are configured near the top of this file. */}
           {musicSources.ogg && <source src={musicSources.ogg} type="audio/ogg" />}
           {musicSources.m4a && <source src={musicSources.m4a} type="audio/mp4" />}
           {musicSources.mp3 && <source src={musicSources.mp3} type="audio/mpeg" />}

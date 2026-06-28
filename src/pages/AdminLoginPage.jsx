@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { signInAdmin } from "../lib/auth";
+import { signInAdmin } from "../services/backend";
 import { useAuth } from "../components/admin/AuthProvider.jsx";
 
 export default function AdminLoginPage({ navigate }) {

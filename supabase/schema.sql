@@ -1,5 +1,10 @@
 create extension if not exists pgcrypto;
 
+create table if not exists public.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.weddings (
   id uuid primary key default gen_random_uuid(),
   bride_name text not null,
@@ -120,52 +125,79 @@ end;
 $$;
 
 alter table public.weddings enable row level security;
+alter table public.admin_users enable row level security;
 alter table public.families enable row level security;
 alter table public.guests enable row level security;
 alter table public.rsvp_submissions enable row level security;
 alter table public.guest_responses enable row level security;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from anon;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.is_admin() to service_role;
+
+drop policy if exists "Admins can read their own authorization" on public.admin_users;
+create policy "Admins can read their own authorization"
+on public.admin_users
+for select
+to authenticated
+using (user_id = auth.uid());
 
 drop policy if exists "Authenticated admins can manage weddings" on public.weddings;
 create policy "Authenticated admins can manage weddings"
 on public.weddings
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "Authenticated admins can manage families" on public.families;
 create policy "Authenticated admins can manage families"
 on public.families
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "Authenticated admins can manage guests" on public.guests;
 create policy "Authenticated admins can manage guests"
 on public.guests
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "Authenticated admins can manage submissions" on public.rsvp_submissions;
 create policy "Authenticated admins can manage submissions"
 on public.rsvp_submissions
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "Authenticated admins can manage guest responses" on public.guest_responses;
 create policy "Authenticated admins can manage guest responses"
 on public.guest_responses
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 revoke all on function public.submit_family_rsvp(text, uuid[], text) from public;
 revoke all on function public.submit_family_rsvp(text, uuid[], text) from anon;
-grant execute on function public.submit_family_rsvp(text, uuid[], text) to authenticated;
+revoke all on function public.submit_family_rsvp(text, uuid[], text) from authenticated;
 grant execute on function public.submit_family_rsvp(text, uuid[], text) to service_role;

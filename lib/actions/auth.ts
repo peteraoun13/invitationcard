@@ -19,7 +19,7 @@ export async function signInAdminAction(
     const password = readRequiredString(formData, "password");
     const supabase = await createSupabaseServerClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -28,6 +28,20 @@ export async function signInAdminAction(
       return {
         ok: false,
         message: "The email or password is incorrect.",
+      };
+    }
+
+    const { data: admin, error: adminError } = await supabase
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
+    if (adminError || !admin) {
+      await supabase.auth.signOut();
+      return {
+        ok: false,
+        message: "This account is not authorized for the admin dashboard.",
       };
     }
   } catch (error) {

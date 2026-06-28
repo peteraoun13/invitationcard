@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Firebase Storage is not used by the current app. Keep it closed until a
+    // dedicated, authenticated upload path and validation policy are added.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

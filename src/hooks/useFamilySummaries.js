@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { subscribeFamilySummaries } from "../lib/families";
+import { subscribeFamilySummaries } from "../services/backend";
 
 export function useFamilySummaries() {
   const [families, setFamilies] = useState([]);

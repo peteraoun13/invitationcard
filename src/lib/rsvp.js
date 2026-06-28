@@ -47,7 +47,13 @@ function getFamilyStatusFromGuests(familyData, guests) {
   const respondedCount = guests.filter((guest) => guest.responded).length;
 
   if (respondedCount === guests.length) {
-    return "completed";
+    const attendingCount = guests.filter((guest) => guest.attending === true).length;
+
+    if (attendingCount === guests.length) {
+      return "completed";
+    }
+
+    return attendingCount === 0 ? "declined" : "partial";
   }
 
   if (respondedCount > 0) {
@@ -82,15 +88,11 @@ async function getFamilySnapshotByInviteSlug(inviteSlug) {
 async function markInviteOpened(familySnapshot, familyData, guests) {
   const currentStatus = getFamilyStatusFromGuests(familyData, guests);
 
-  if (currentStatus === "completed" || currentStatus === "partial") {
+  if (["completed", "partial", "declined"].includes(currentStatus)) {
     return;
   }
 
   if (guests.length === 0) {
-    await updateDoc(familySnapshot.ref, {
-      status: "pending",
-      updatedAt: serverTimestamp(),
-    });
     return;
   }
 
@@ -141,12 +143,32 @@ export async function getInviteByToken(inviteSlug) {
   };
 }
 
-export async function submitFamilyRsvp({ familyId, inviteToken, guests, selectedGuestIds }) {
-  const selectedIds = new Set(selectedGuestIds);
+export async function submitFamilyRsvp({
+  familyId,
+  inviteToken,
+  guests,
+  responses: submittedResponses = [],
+}) {
+  const explicitResponses = new Map(
+    submittedResponses.map((response) => [response.guestId, response.attending]),
+  );
+
+  if (
+    submittedResponses.length !== guests.length ||
+    explicitResponses.size !== guests.length ||
+      guests.some(
+        (guest) =>
+          !explicitResponses.has(guest.id) ||
+          typeof explicitResponses.get(guest.id) !== "boolean",
+      )
+  ) {
+    throw new Error("Please answer Yes or No for every guest.");
+  }
+
   const responses = guests.map((guest) => ({
     guestId: guest.id,
     name: guest.name,
-    attending: selectedIds.has(guest.id),
+    attending: explicitResponses.get(guest.id),
   }));
   const batch = writeBatch(db);
   const submissionRef = doc(collection(db, "rsvpSubmissions"));

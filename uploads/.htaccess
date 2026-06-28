@@ -1,0 +1,16 @@
+Options -Indexes
+
+<FilesMatch "\.(php|phtml|php3|php4|php5|phar|cgi|pl|py|sh)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Content-Security-Policy "default-src 'none'; sandbox"
+  Header always set Cache-Control "public, max-age=86400"
+</IfModule>

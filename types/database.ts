@@ -6,6 +6,11 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type AdminUser = {
+  user_id: string;
+  created_at: string;
+};
+
 export type Wedding = {
   id: string;
   bride_name: string;
@@ -48,6 +53,15 @@ export type GuestResponse = {
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: AdminUser;
+        Insert: {
+          user_id: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       weddings: {
         Row: Wedding;
         Insert: {

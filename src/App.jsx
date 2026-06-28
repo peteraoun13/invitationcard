@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell, AdminStatus } from "./components/admin/AdminShell.jsx";
 import { AuthProvider, useAuth } from "./components/admin/AuthProvider.jsx";
 import InvitationExperience from "./components/InvitationExperience.jsx";
-import { isFirebaseConfigured } from "./lib/firebase";
+import { backendProvider, isBackendConfigured } from "./services/backend";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AdminLoginPage from "./pages/AdminLoginPage.jsx";
 import FamiliesPage from "./pages/FamiliesPage.jsx";
@@ -45,11 +45,15 @@ function useBrowserRoute() {
   return { path, navigate };
 }
 
-function FirebaseConfigStatus() {
+function BackendConfigStatus() {
   return (
     <AdminStatus
-      title="Firebase is not configured yet."
-      message="Add the Vite Firebase environment variables, then restart the dev server."
+      title="Backend is not configured yet."
+      message={
+        backendProvider === "firebase"
+          ? "Add the Vite Firebase environment variables, then restart the dev server."
+          : "Check the PHP API and database credentials on OVH."
+      }
     />
   );
 }
@@ -141,8 +145,8 @@ export default function App() {
   const isInviteRoute = Boolean(inviteToken);
 
   if (isAdminRoute) {
-    if (!isFirebaseConfigured) {
-      return <FirebaseConfigStatus />;
+    if (!isBackendConfigured) {
+      return <BackendConfigStatus />;
     }
 
     return (
@@ -153,8 +157,8 @@ export default function App() {
   }
 
   if (isInviteRoute) {
-    if (!isFirebaseConfigured) {
-      return <FirebaseConfigStatus />;
+    if (!isBackendConfigured) {
+      return <BackendConfigStatus />;
     }
 
     return <PublicInvitePage token={inviteToken} />;

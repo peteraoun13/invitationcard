@@ -897,9 +897,87 @@ letter-spacing: 0.16em;
 .guest-list {
   display: grid;
   gap: clamp(8px, 1.15svh, 12px);
-  width: min(100%, 330px);
-  margin: clamp(24px, 3.1svh, 34px) 0 0;
+  width: min(100%, 310px);
+  margin: clamp(24px, 3.1svh, 34px) auto 0;
   padding: 0;
+}
+
+.guest-response-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 56px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.guest-response-row:last-child {
+  border-bottom: 0;
+}
+
+.guest-response-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.94);
+  font-family: var(--font-display);
+  font-size: clamp(1.14rem, 4vw, 1.42rem);
+  font-weight: 400;
+  letter-spacing: 0.035em;
+  line-height: 1.15;
+}
+
+.guest-response-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 112px;
+}
+
+.guest-response-option {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.66);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.guest-response-option.is-selected {
+  background: transparent;
+  color: rgba(255, 255, 255, 1);
+  border-bottom-color: rgba(255, 255, 255, 1);
+  border-bottom-width: 2px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
+}
+
+.guest-response-option.is-no.is-selected {
+  background: transparent;
+  color: rgba(255, 255, 255, 1);
+}
+
+.guest-response-option:disabled {
+  cursor: default;
+}
+
+.guest-response-option:focus-visible {
+  outline: 2px solid rgba(255, 252, 244, 0.8);
+  outline-offset: 4px;
+}
+
+.guest-response-row.is-locked .guest-response-option:not(.is-selected) {
+  opacity: 0.42;
 }
 
 .guest-row {
@@ -959,6 +1037,10 @@ letter-spacing: 0.16em;
 .rsvp-reserve.is-disabled {
   opacity: 0.42;
   pointer-events: none;
+}
+
+button.rsvp-reserve:disabled {
+  cursor: not-allowed;
 }
 
 .rsvp-confirmation {
@@ -1826,6 +1908,61 @@ letter-spacing: 0.16em;
   color: #944337;
 }
 
+.admin-button--danger-solid {
+  border-color: #8f453b;
+  background: #8f453b;
+  color: #fffaf4;
+}
+
+.admin-button--danger-solid:hover:not(:disabled) {
+  background: #793a32;
+}
+
+.admin-confirm-overlay {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(42, 35, 28, 0.38);
+  backdrop-filter: blur(6px);
+}
+
+.admin-confirm-modal {
+  display: grid;
+  width: min(100%, 480px);
+  padding: clamp(26px, 5vw, 40px);
+  border: 1px solid rgba(112, 93, 70, 0.2);
+  border-radius: 8px;
+  background: #fffdf9;
+  box-shadow: 0 28px 70px rgba(48, 39, 30, 0.24);
+  color: #342d25;
+}
+
+.admin-confirm-modal h2 {
+  margin: 7px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.admin-confirm-modal__message {
+  margin: 18px 0 0;
+  color: #716352;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.admin-confirm-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 28px;
+}
+
 .admin-alert {
   margin: 14px 0 0;
   padding: 12px 14px;
@@ -1836,6 +1973,11 @@ letter-spacing: 0.16em;
 .admin-alert--error {
   background: rgba(150, 67, 55, 0.1);
   color: #944337;
+}
+
+.admin-alert--success {
+  background: rgba(54, 101, 84, 0.11);
+  color: #366554;
 }
 
 .admin-stat-grid {
@@ -2179,6 +2321,42 @@ letter-spacing: 0.16em;
 .admin-status-pill--completed {
   background: rgba(54, 101, 84, 0.15);
   color: #366554;
+}
+
+.admin-status-pill--declined {
+  background: rgba(143, 69, 59, 0.12);
+  color: #80443b;
+}
+
+@media (max-width: 480px) {
+  .admin-confirm-overlay {
+    padding: 16px;
+  }
+
+  .admin-confirm-modal__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-confirm-modal__actions .admin-button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .guest-response-row {
+    grid-template-columns: minmax(0, 1fr) 108px;
+    gap: 14px;
+  }
+
+  .guest-response-options {
+    width: 108px;
+  }
+
+  .guest-response-option {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
 }
 
 .admin-status-pill--needs-guests {

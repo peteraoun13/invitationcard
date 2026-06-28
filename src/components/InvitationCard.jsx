@@ -432,36 +432,48 @@ function RsvpSection({
           })),
     [hasDynamicGuests, rsvp.guests, rsvpGuests],
   );
-  const [selectedGuests, setSelectedGuests] = useState(() =>
-    guests.filter((guest) => guest.attending === true).map((guest) => guest.id),
+  const [guestResponses, setGuestResponses] = useState(() =>
+    Object.fromEntries(
+      guests
+        .filter((guest) => typeof guest.attending === "boolean")
+        .map((guest) => [guest.id, guest.attending]),
+    ),
   );
-  const [rsvpState, formAction] = useActionState(
+  const [rsvpState, formAction, isSubmitting] = useActionState(
     submitRsvpAction || fallbackRsvpAction,
     initialRsvpActionState,
   );
   const isDatabaseRsvp = Boolean(submitRsvpAction);
   const isSubmitted = rsvpSubmitted || rsvpState.ok;
-  const selectedGuestNames = guests
-    .filter((guest) => selectedGuests.includes(guest.id))
-    .map((guest) => guest.name);
+  const allGuestsAnswered =
+    guests.length > 0 &&
+    guests.every((guest) =>
+      Object.prototype.hasOwnProperty.call(guestResponses, guest.id),
+    );
   const rsvpHref = `mailto:${rsvp.email}?subject=${ui.rsvpSubject} - ${
     couple.names
   }&body=${encodeURIComponent(
-    `${ui.rsvpGreeting},\n\n${ui.rsvpBodyIntro}\n${selectedGuestNames
-      .map((name) => `- ${name}`)
+    `${ui.rsvpGreeting},\n\n${ui.rsvpBodyIntro}\n${guests
+      .map(
+        (guest) =>
+          `- ${guest.name}: ${
+            guestResponses[guest.id]
+              ? ui.rsvpYesLabel || "Yes"
+              : ui.rsvpNoLabel || "No"
+          }`,
+      )
       .join("\n")}\n\n${ui.rsvpThanks}`,
   )}`;
 
-  function toggleGuest(guestId) {
+  function chooseGuestResponse(guestId, attending) {
     if (isSubmitted) {
       return;
     }
 
-    setSelectedGuests((current) =>
-      current.includes(guestId)
-        ? current.filter((currentGuestId) => currentGuestId !== guestId)
-        : [...current, guestId],
-    );
+    setGuestResponses((current) => ({
+      ...current,
+      [guestId]: attending,
+    }));
   }
 
   useEffect(() => {
@@ -471,19 +483,26 @@ function RsvpSection({
   }, [onRsvpSubmitted, rsvpState.message, rsvpState.ok]);
 
   useEffect(() => {
-    if (!rsvpSubmitted) {
-      return;
-    }
+    setGuestResponses((current) => {
+      const nextResponses = {};
 
-    setSelectedGuests(
-      guests.filter((guest) => guest.attending === true).map((guest) => guest.id),
-    );
-  }, [guests, rsvpSubmitted]);
+      guests.forEach((guest) => {
+        if (Object.prototype.hasOwnProperty.call(current, guest.id)) {
+          nextResponses[guest.id] = current[guest.id];
+        } else if (typeof guest.attending === "boolean") {
+          nextResponses[guest.id] = guest.attending;
+        }
+      });
+
+      return nextResponses;
+    });
+  }, [guests]);
 
   return (
     <StorySection showScrollCue={false}>
       <form
         action={isDatabaseRsvp ? formAction : undefined}
+        aria-busy={isSubmitting}
         className="section-card rsvp-card"
       >
         <p className="event-eyebrow">{rsvp.eyebrow}</p>
@@ -491,27 +510,44 @@ function RsvpSection({
         <span className="event-rule" aria-hidden="true" />
         <p className="rsvp-line">{rsvp.line}</p>
 
-        {selectedGuests.map((guestId) => (
-          <input type="hidden" name="guestIds" value={guestId} key={guestId} />
+        {Object.entries(guestResponses).map(([guestId, attending]) => (
+          <input
+            key={guestId}
+            name="guestResponses"
+            type="hidden"
+            value={JSON.stringify({ guestId, attending })}
+          />
         ))}
 
         <div className="guest-list" aria-label="Guest names">
           {guests.map((guest) => {
-            const isSelected = selectedGuests.includes(guest.id);
+            const answeredYes = guestResponses[guest.id] === true;
+            const answeredNo = guestResponses[guest.id] === false;
 
             return (
-              <button
-                type="button"
-                className={`guest-row ${isSelected ? "is-selected" : ""} ${
-                  isSubmitted ? "is-locked" : ""
-                }`}
-                disabled={isSubmitted}
-                onClick={() => toggleGuest(guest.id)}
-                key={guest.id}
-              >
-                <span className="guest-square" aria-hidden="true" />
-                <span>{guest.name}</span>
-              </button>
+              <div className={`guest-response-row ${isSubmitted ? "is-locked" : ""}`} key={guest.id}>
+                <span className="guest-response-name">{guest.name}</span>
+                <div className="guest-response-options" role="group" aria-label={`RSVP for ${guest.name}`}>
+                  <button
+                    aria-pressed={answeredYes}
+                    className={`guest-response-option ${answeredYes ? "is-selected is-yes" : ""}`}
+                    disabled={isSubmitted || isSubmitting}
+                    onClick={() => chooseGuestResponse(guest.id, true)}
+                    type="button"
+                  >
+                    {ui.rsvpYesLabel || "Yes"}
+                  </button>
+                  <button
+                    aria-pressed={answeredNo}
+                    className={`guest-response-option ${answeredNo ? "is-selected is-no" : ""}`}
+                    disabled={isSubmitted || isSubmitting}
+                    onClick={() => chooseGuestResponse(guest.id, false)}
+                    type="button"
+                  >
+                    {ui.rsvpNoLabel || "No"}
+                  </button>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -519,13 +555,17 @@ function RsvpSection({
         {isSubmitted && (
           <div className="rsvp-confirmation" role="status">
             <span className="rsvp-confirmation__rule" aria-hidden="true" />
-            <p>With gratitude</p>
-            <small>Your response has been reserved.</small>
+            <p>{ui.rsvpConfirmationTitle}</p>
+            <small>{ui.rsvpConfirmationMessage}</small>
           </div>
         )}
 
         {!isSubmitted && isDatabaseRsvp ? (
-          <button type="submit" className="event-button rsvp-reserve">
+          <button
+            className={`event-button rsvp-reserve ${!allGuestsAnswered ? "is-disabled" : ""}`}
+            disabled={!allGuestsAnswered || isSubmitting}
+            type="submit"
+          >
             <span>{rsvp.buttonLabel}</span>
           </button>
         ) : null}
@@ -533,10 +573,10 @@ function RsvpSection({
         {!isSubmitted && !isDatabaseRsvp ? (
           <a
             className={`event-button rsvp-reserve ${
-              selectedGuests.length === 0 ? "is-disabled" : ""
+              !allGuestsAnswered ? "is-disabled" : ""
             }`}
-            href={selectedGuests.length > 0 ? rsvpHref : undefined}
-            aria-disabled={selectedGuests.length === 0}
+            href={allGuestsAnswered ? rsvpHref : undefined}
+            aria-disabled={!allGuestsAnswered}
           >
             <span>{rsvp.buttonLabel}</span>
           </a>

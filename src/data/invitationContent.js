@@ -1,4 +1,4 @@
-import coverVideoAsset from "../assets/video.mp4";
+import coverVideoAsset from "../assets/video1.mp4";
 
 function getAssetSrc(asset) {
   return typeof asset === "string" ? asset : asset?.src || "";
@@ -29,6 +29,10 @@ export const invitationContent = {
         rsvpGreeting: "Hello",
         rsvpBodyIntro: "We confirm our presence for:",
         rsvpThanks: "Thank you.",
+        rsvpYesLabel: "Yes",
+        rsvpNoLabel: "No",
+        rsvpConfirmationTitle: "With gratitude",
+        rsvpConfirmationMessage: "Your response has been received.",
       },
 
       couple: {
@@ -81,7 +85,7 @@ export const invitationContent = {
         lines: [
           "The greatest gift we could have is your presence.",
           "For those who wish to celebrate our special day with a gift, a wedding list is available at",
-          "OMT: 71 855 445",
+          "Whish: 30230874",
         ],
       },
 
@@ -122,6 +126,10 @@ export const invitationContent = {
         rsvpGreeting: "Bonjour",
         rsvpBodyIntro: "Nous confirmons notre présence pour :",
         rsvpThanks: "Merci.",
+        rsvpYesLabel: "Oui",
+        rsvpNoLabel: "Non",
+        rsvpConfirmationTitle: "Avec gratitude",
+        rsvpConfirmationMessage: "Votre réponse a bien été enregistrée.",
       },
 
       couple: {
@@ -174,7 +182,7 @@ export const invitationContent = {
         lines: [
           "Le plus beau cadeau sera votre présence à nos côtés.",
           "Pour ceux qui souhaitent célébrer cette journée avec un cadeau, une liste de mariage est disponible chez",
-          "OMT: 71 855 445",
+          "Whish: 30230874",
         ],
       },
 

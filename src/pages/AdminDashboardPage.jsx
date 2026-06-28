@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useFamilySummaries } from "../hooks/useFamilySummaries";
-import { getDashboardStatsFromSummaries } from "../lib/families";
+import { getDashboardStatsFromSummaries } from "../services/backend";
 
 const statusOrder = [
   { value: "pending", label: "Pending setup" },
@@ -8,6 +8,7 @@ const statusOrder = [
   { value: "opened", label: "Opened" },
   { value: "partial", label: "Partial" },
   { value: "completed", label: "Completed" },
+  { value: "declined", label: "Declined" },
 ];
 
 function formatMillis(value) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import InvitationExperience from "../components/InvitationExperience.jsx";
-import { getInviteByToken, submitFamilyRsvp } from "../lib/rsvp";
+import { getInviteByToken, submitFamilyRsvp } from "../services/backend";
 
 function PublicStatus({ title, message }) {
   return (
@@ -80,14 +80,38 @@ export default function PublicInvitePage({ token }) {
       }
 
       try {
-        const selectedGuestIds = formData
-          .getAll("guestIds")
-          .filter((value) => typeof value === "string");
+        const responses = formData.getAll("guestResponses").map((value) => {
+          if (typeof value !== "string") {
+            throw new Error("Please answer Yes or No for every guest.");
+          }
+
+          const response = JSON.parse(value);
+
+          if (
+            !response ||
+            typeof response.guestId !== "string" ||
+            typeof response.attending !== "boolean"
+          ) {
+            throw new Error("Please answer Yes or No for every guest.");
+          }
+
+          return response;
+        });
+        const answeredGuestIds = new Set(responses.map((response) => response.guestId));
+
+        if (
+          responses.length !== invite.guests.length ||
+          answeredGuestIds.size !== invite.guests.length ||
+          invite.guests.some((guest) => !answeredGuestIds.has(guest.id))
+        ) {
+          throw new Error("Please answer Yes or No for every guest.");
+        }
+
         const result = await submitFamilyRsvp({
           familyId: invite.family.id,
           inviteToken: invite.family.inviteToken,
           guests: invite.guests,
-          selectedGuestIds,
+          responses,
         });
 
         setInvite((currentInvite) =>

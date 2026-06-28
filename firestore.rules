@@ -11,22 +11,41 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function isValidText(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
     function publicCanAccessFamily(familyId) {
       return exists(/databases/$(database)/documents/families/$(familyId))
         && get(/databases/$(database)/documents/families/$(familyId)).data.inviteToken == familyId;
     }
 
-    function publicFamilyStatusUpdateOnly() {
-      return request.resource.data.diff(resource.data).affectedKeys()
+    function publicFamilyOpenUpdateOnly() {
+      return resource.data.status in ['not_opened', 'opened']
+        && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['openedAt', 'status', 'updatedAt'])
-        && request.resource.data.status in ['pending', 'opened']
-        && request.resource.data.updatedAt is timestamp;
+        && request.resource.data.status == 'opened'
+        && request.resource.data.updatedAt == request.time
+        && (
+          (!('openedAt' in resource.data) && request.resource.data.openedAt == request.time)
+          || (('openedAt' in resource.data) && resource.data.openedAt == null
+            && request.resource.data.openedAt == request.time)
+          || (('openedAt' in resource.data) && resource.data.openedAt != null
+            && request.resource.data.openedAt == resource.data.openedAt)
+        );
+    }
+
+    function validPublicGuestResponse() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['attending', 'responded', 'updatedAt'])
+        && request.resource.data.attending is bool
+        && request.resource.data.responded == true
+        && request.resource.data.updatedAt == request.time;
     }
 
     match /admins/{adminId} {
       allow get: if isSignedIn() && request.auth.uid == adminId;
-      allow list: if false;
-      allow write: if false;
+      allow list, create, update, delete: if false;
     }
 
     match /{path=**}/guests/{guestId} {
@@ -34,26 +53,31 @@ service cloud.firestore {
     }
 
     match /families/{familyId} {
-      allow get: if isAdmin() || resource.data.inviteToken == familyId;
+      allow get: if isAdmin()
+        || (resource.data.inviteToken is string && resource.data.inviteToken == familyId);
       allow list: if isAdmin();
       allow create: if isAdmin()
         && request.resource.data.inviteToken == familyId
-        && request.resource.data.familyName is string;
+        && isValidText(request.resource.data.familyName, 190)
+        && isValidText(request.resource.data.publicSlug, 255)
+        && request.resource.data.status in ['pending', 'not_opened']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
       allow update: if isAdmin()
-        || (publicCanAccessFamily(familyId) && publicFamilyStatusUpdateOnly());
+        || (publicCanAccessFamily(familyId) && publicFamilyOpenUpdateOnly());
       allow delete: if isAdmin();
 
       match /guests/{guestId} {
         allow get, list: if isAdmin() || publicCanAccessFamily(familyId);
-        allow create, delete: if isAdmin();
+        allow create: if isAdmin()
+          && isValidText(request.resource.data.name, 190)
+          && request.resource.data.responded == false
+          && request.resource.data.attending == null
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin();
         allow update: if isAdmin()
-          || (
-            publicCanAccessFamily(familyId)
-            && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['attending', 'responded', 'updatedAt'])
-            && request.resource.data.attending is bool
-            && request.resource.data.responded == true
-          );
+          || (publicCanAccessFamily(familyId) && validPublicGuestResponse());
       }
     }
 
@@ -63,9 +87,9 @@ service cloud.firestore {
         && request.resource.data.familyId is string
         && request.resource.data.inviteToken == request.resource.data.familyId
         && publicCanAccessFamily(request.resource.data.familyId)
-        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.submittedAt == request.time
         && request.resource.data.responses is list
-        && request.resource.data.responses.size() <= 100;
+        && request.resource.data.responses.size() <= 240;
       allow read, update, delete: if isAdmin();
     }
 

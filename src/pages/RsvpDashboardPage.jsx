@@ -4,7 +4,7 @@ import PaginationControls, {
   getPaginatedItems,
 } from "../components/admin/PaginationControls.jsx";
 import { useFamilySummaries } from "../hooks/useFamilySummaries";
-import { updateGuestRsvpStatus } from "../lib/families";
+import { updateGuestRsvpStatus } from "../services/backend";
 import { exportRows } from "../lib/spreadsheets";
 
 const filterOptions = [

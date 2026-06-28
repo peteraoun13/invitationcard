@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
+const INTRO_ASSET_VERSION = "20260627-1";
+
 export const envelopeIntroAssets = {
   // These live in public/ so the intro can load from stable, high-priority URLs.
-  envelopeClosed: "/envelope-closed.jpg",
-  openingMp4: "/opening-video.mp4",
+  envelopeClosed: `/envelope-closed.jpg?v=${INTRO_ASSET_VERSION}`,
+  openingMp4: `/opening-video.mp4?v=${INTRO_ASSET_VERSION}`,
   openingWebm: "",
 };
 

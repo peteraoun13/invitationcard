@@ -1,4 +1,4 @@
-import { signOutAdmin } from "../../lib/auth";
+import { signOutAdmin } from "../../services/backend";
 import { useAuth } from "./AuthProvider.jsx";
 
 function AdminNavLink({ currentPath, navigate, to, children }) {

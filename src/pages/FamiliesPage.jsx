@@ -5,12 +5,13 @@ import {
   getDashboardStatsFromSummaries,
   importFamiliesWithGuests,
   updateFamilyName,
-} from "../lib/families";
+} from "../services/backend";
 import PaginationControls, {
   getPageCount,
   getPaginatedItems,
 } from "../components/admin/PaginationControls.jsx";
-import { buildInviteLink } from "../lib/firebase";
+import ConfirmModal from "../components/admin/ConfirmModal.jsx";
+import { buildInviteLink } from "../services/backend";
 import { exportRows, parseGuestImportFile } from "../lib/spreadsheets";
 import { useFamilySummaries } from "../hooks/useFamilySummaries";
 
@@ -20,6 +21,7 @@ const statusFilters = [
   { label: "Opened", value: "opened" },
   { label: "Partial", value: "partial" },
   { label: "Completed", value: "completed" },
+  { label: "Declined", value: "declined" },
   { label: "Pending", value: "pending" },
 ];
 
@@ -428,7 +430,7 @@ function ImportPanel({ families, onImported }) {
   );
 }
 
-function FamilyTableRow({ family, navigate }) {
+function FamilyTableRow({ family, navigate, onRequestDelete }) {
   const [familyName, setFamilyName] = useState(family.familyName);
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -480,25 +482,6 @@ function FamilyTableRow({ family, navigate }) {
     await navigator.clipboard.writeText(buildInviteLink(family));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
-  }
-
-  async function handleDelete() {
-    const isConfirmed = window.confirm(`Delete ${family.familyName} and all guests?`);
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    setIsSaving(true);
-    setError("");
-
-    try {
-      await deleteFamily(family.id);
-    } catch (deleteError) {
-      setError(deleteError.message);
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   return (
@@ -586,7 +569,7 @@ function FamilyTableRow({ family, navigate }) {
             className="admin-button admin-button--small admin-button--danger"
             disabled={isSaving}
             type="button"
-            onClick={handleDelete}
+            onClick={() => onRequestDelete(family)}
           >
             Delete
           </button>
@@ -603,6 +586,10 @@ export default function FamiliesPage({ navigate }) {
   const [sort, setSort] = useState("created-desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [familyToDelete, setFamilyToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteNotice, setDeleteNotice] = useState("");
   const stats = useMemo(() => getDashboardStatsFromSummaries(families), [families]);
   const filteredFamilies = useMemo(
     () => getFilteredFamilies(families, { search, statusFilter, sort }),
@@ -631,6 +618,39 @@ export default function FamiliesPage({ navigate }) {
     exportRows(buildExportRows(filteredFamilies), "wedding-rsvp-export", format);
   }
 
+  function requestFamilyDelete(family) {
+    setDeleteError("");
+    setDeleteNotice("");
+    setFamilyToDelete(family);
+  }
+
+  function cancelFamilyDelete() {
+    if (!isDeleting) {
+      setFamilyToDelete(null);
+      setDeleteError("");
+    }
+  }
+
+  async function confirmFamilyDelete() {
+    if (!familyToDelete || isDeleting) {
+      return;
+    }
+
+    setDeleteError("");
+    setIsDeleting(true);
+
+    try {
+      const deletedName = familyToDelete.familyName;
+      await deleteFamily(familyToDelete.id);
+      setFamilyToDelete(null);
+      setDeleteNotice(`${deletedName} and all guests were deleted successfully.`);
+    } catch (deleteFailure) {
+      setDeleteError(deleteFailure.message || "Could not delete this family.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="admin-workspace">
       <div className="admin-page-title">
@@ -651,6 +671,12 @@ export default function FamiliesPage({ navigate }) {
       {error && (
         <p className="admin-alert admin-alert--error" role="alert">
           {error}
+        </p>
+      )}
+
+      {deleteNotice && (
+        <p className="admin-alert admin-alert--success" role="status">
+          {deleteNotice}
         </p>
       )}
 
@@ -727,6 +753,7 @@ export default function FamiliesPage({ navigate }) {
                       family={family}
                       key={family.id}
                       navigate={navigate}
+                      onRequestDelete={requestFamilyDelete}
                     />
                   ))}
                 </tbody>
@@ -742,6 +769,21 @@ export default function FamiliesPage({ navigate }) {
           </>
         )}
       </section>
+
+      <ConfirmModal
+        confirmLabel="Delete family"
+        error={deleteError}
+        isLoading={isDeleting}
+        isOpen={Boolean(familyToDelete)}
+        message={
+          familyToDelete
+            ? `This will permanently delete "${familyToDelete.familyName}" and all guests inside this family. This action cannot be undone.`
+            : ""
+        }
+        onCancel={cancelFamilyDelete}
+        onConfirm={confirmFamilyDelete}
+        title="Delete family and all guests?"
+      />
     </div>
   );
 }

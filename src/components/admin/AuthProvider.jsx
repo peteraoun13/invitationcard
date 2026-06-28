@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { onAdminAuthStateChanged } from "../../lib/auth";
+import { onAdminAuthStateChanged } from "../../services/backend";
 
 const AuthContext = createContext({
   user: null,

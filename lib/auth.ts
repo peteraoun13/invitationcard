@@ -7,6 +7,20 @@ export async function getAdminUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return null;
+  }
+
+  const { data: admin, error } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error || !admin) {
+    return null;
+  }
+
   return user;
 }
 

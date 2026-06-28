@@ -5,6 +5,7 @@ dist/
 .qa/
 .env
 .env.local
+api/config.local.php
 tsconfig.tsbuildinfo
 .DS_Store
 *.log
