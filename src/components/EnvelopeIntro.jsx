@@ -1,19 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const INTRO_ASSET_VERSION = "20260627-1";
+const INTRO_ASSET_VERSION = "20260629-2";
 
 export const envelopeIntroAssets = {
   // These live in public/ so the intro can load from stable, high-priority URLs.
-  envelopeClosed: `/envelope-closed.jpg?v=${INTRO_ASSET_VERSION}`,
-  openingMp4: `/opening-video.mp4?v=${INTRO_ASSET_VERSION}`,
+  openingMp4: `/opening-video1.mp4?v=${INTRO_ASSET_VERSION}`,
   openingWebm: "",
 };
 
 export default function EnvelopeIntro({
-  envelopeReady = false,
   onComplete,
-  onEnvelopeReady,
   onOpeningVideoReady,
   onPrepareInvitationMedia,
   onPrimeMusic,
@@ -27,20 +24,15 @@ export default function EnvelopeIntro({
   const playStartedAtRef = useRef(0);
   const videoReadyRef = useRef(false);
   const [status, setStatus] = useState("idle");
-  const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
-  const hasClosedImage =
-    Boolean(envelopeIntroAssets.envelopeClosed) &&
-    !imageFailed;
   const hasVideo = Boolean(
     envelopeIntroAssets.openingMp4 || envelopeIntroAssets.openingWebm,
   ) && !videoFailed;
   const isStarting = status === "starting";
-  const isPlaying = status === "playing";
   const isComplete = status === "complete";
-  const canOpen = hasClosedImage && envelopeReady && hasVideo && videoReady;
+  const canOpen = hasVideo && videoReady;
 
   useEffect(() => {
     return () => {
@@ -181,22 +173,6 @@ export default function EnvelopeIntro({
   return (
     <div className="intro-screen" aria-label="Interactive envelope invitation">
       <div className="intro-media-frame">
-        {hasClosedImage && (
-          <motion.img
-            className="intro-media intro-media--image"
-            src={envelopeIntroAssets.envelopeClosed}
-            alt="Closed wedding invitation envelope"
-            draggable="false"
-            animate={{
-              opacity: status === "idle" ? 1 : 0,
-              scale: isPlaying ? 1.015 : 1,
-            }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            onLoad={onEnvelopeReady}
-            onError={() => setImageFailed(true)}
-          />
-        )}
-
         {hasVideo && (
           <motion.video
             ref={videoRef}
@@ -204,9 +180,9 @@ export default function EnvelopeIntro({
             muted
             playsInline
             preload="auto"
-            poster={envelopeIntroAssets.envelopeClosed}
             controls={false}
-            animate={{ opacity: isStarting || isPlaying || isComplete ? 1 : 0 }}
+            aria-label="Wedding invitation envelope"
+            animate={{ opacity: videoReady ? 1 : 0 }}
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             onEnded={finishIntro}
             onError={handleVideoError}

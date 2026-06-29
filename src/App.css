@@ -496,10 +496,13 @@ button {
   gap: 0.05em;
   color: rgba(255, 255, 255, 0.98);
   font-family: var(--font-display);
-  font-size: clamp(2rem, 7.2vw, 3rem);
+  max-width: 100%;
+  font-size: clamp(1.75rem, 4.4svh, 2.7rem);
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   line-height: 1.08;
+  overflow-wrap: normal;
+  text-wrap: balance;
   text-transform: uppercase;
 }
 
@@ -616,6 +619,28 @@ button {
   box-shadow: 0 0 14px rgba(255, 252, 244, 0.42);
   transform: translateX(-50%);
   animation: scrollDot 2.6s ease-in-out infinite;
+}
+
+.invitation-credit {
+  position: absolute;
+  left: 50%;
+  bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
+  z-index: 9;
+  margin: 0;
+  color: rgba(255, 252, 244, 0.5);
+  font-family: var(--font-body);
+  font-size: 0.56rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.32);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.invitation-credit span {
+  color: rgba(255, 252, 244, 0.7);
+  font-weight: 600;
 }
 
 @keyframes scrollCueFloat {
@@ -823,7 +848,7 @@ letter-spacing: 0.16em;
 
 .event-button:focus-visible,
 .guest-row:focus-visible,
-.language-toggle:focus-visible,
+.language-toggle__option:focus-visible,
 .music-toggle:focus-visible {
   outline: 2px solid rgba(255, 252, 244, 0.72);
   outline-offset: 5px;
@@ -881,7 +906,8 @@ letter-spacing: 0.16em;
 }
 
 .rsvp-title {
-  white-space: nowrap;
+  width: 100%;
+  white-space: normal;
 }
 
 .rsvp-line {
@@ -978,6 +1004,21 @@ letter-spacing: 0.16em;
 
 .guest-response-row.is-locked .guest-response-option:not(.is-selected) {
   opacity: 0.42;
+}
+
+.guest-list--dense {
+  max-height: min(42svh, 340px);
+  padding-right: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 252, 244, 0.34) transparent;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.guest-list--dense .guest-response-row {
+  min-height: 46px;
 }
 
 .guest-row {
@@ -1320,12 +1361,11 @@ button.rsvp-reserve:disabled {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-height: 22px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: transparent;
   color: rgba(255, 252, 244, 0.86);
-  cursor: pointer;
   font-family: var(--font-display);
   font-size: clamp(0.82rem, 1.8svh, 1.02rem);
   font-weight: 600;
@@ -1343,12 +1383,38 @@ button.rsvp-reserve:disabled {
     opacity 0.22s ease;
 }
 
+.language-toggle__option {
+  display: inline-grid;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 252, 244, 0.52);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  opacity: 0.72;
+  text-shadow: inherit;
+  text-transform: inherit;
+  transition:
+    color 0.22s ease,
+    opacity 0.22s ease,
+    text-shadow 0.22s ease;
+}
+
 .language-toggle span[aria-hidden="true"] {
   color: rgba(255, 252, 244, 0.64);
 }
 
 .language-toggle .is-active {
   color: rgba(255, 252, 244, 0.98);
+  opacity: 1;
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.42),
+    0 0 12px rgba(255, 252, 244, 0.22);
 }
 
 /* Music Button */
@@ -2625,9 +2691,13 @@ button.rsvp-reserve:disabled {
 }
 
 /* Responsive Styles */
-@media (min-width: 900px) {
+@media (min-width: 600px) {
   :root {
-    --phone-frame-height: min(100svh - 64px, 980px);
+    --phone-frame-height: min(
+      calc(100svh - 64px),
+      calc(177.778vw - 85.333px),
+      900px
+    );
   }
 
   body {
@@ -2666,21 +2736,101 @@ button.rsvp-reserve:disabled {
     padding-left: clamp(26px, 4.8svh, 50px);
   }
 
-  .video-invite-hero h1 {
-    font-size: clamp(4.35rem, 7.8svh, 6.3rem);
+  .video-invite-panel:not(.video-invite-hero) {
+    padding-top: max(104px, calc(env(safe-area-inset-top) + 84px));
+    padding-bottom: max(84px, calc(env(safe-area-inset-bottom) + 64px));
+  }
+
+  .section-card,
+  .video-copy-stack {
+    width: min(90%, 470px);
+  }
+
+  .video-copy-stack,
+  .video-invitation-copy {
+    gap: clamp(11px, 1.4svh, 17px);
+  }
+
+  .event-title,
+  .rsvp-title {
+    font-size: clamp(1.72rem, 3.7svh, 2.25rem);
+  }
+
+  .video-verse {
+    gap: clamp(6px, 0.75svh, 9px);
+    font-size: clamp(1.18rem, 2.65svh, 1.5rem);
+  }
+
+  .video-blessing-lines {
+    font-size: clamp(1.12rem, 2.5svh, 1.42rem);
+  }
+
+  .video-request-copy {
+    font-size: clamp(1.08rem, 2.4svh, 1.35rem);
+  }
+
+  .video-family-names-group {
+    gap: clamp(7px, 0.9svh, 11px);
+  }
+
+  .video-small-line,
+  .video-celebration-date {
+    font-size: clamp(1rem, 2svh, 1.12rem);
+  }
+
+  .video-family-name {
+    font-size: clamp(1.02rem, 2.15svh, 1.18rem);
+  }
+
+  .video-copy-stack .video-couple-signature {
+    font-size: clamp(3.7rem, 7.6svh, 4.9rem);
+  }
+
+  .event-time {
+    font-size: clamp(2rem, 4.7svh, 2.65rem);
+  }
+
+  .event-card .event-place {
+    margin-top: clamp(24px, 2.6svh, 34px);
+    font-size: clamp(1.32rem, 2.9svh, 1.65rem);
+  }
+
+  .event-button {
+    margin-top: clamp(24px, 3svh, 34px);
+  }
+
+  .gift-copy {
+    gap: clamp(10px, 1.3svh, 15px);
   }
 
   .gift-copy p,
   .rsvp-line {
-    font-size: clamp(1.28rem, 2.75svh, 1.82rem);
+    font-size: clamp(1.04rem, 2.2svh, 1.22rem);
   }
 
-  .rsvp-title {
-    font-size: clamp(2.55rem, 4.95svh, 3.8rem);
+  .gift-copy .gift-contact {
+    font-size: clamp(1.42rem, 3.2svh, 1.75rem);
+  }
+
+  .guest-list {
+    gap: clamp(5px, 0.75svh, 8px);
+    margin-top: clamp(18px, 2.2svh, 24px);
+  }
+
+  .guest-response-row {
+    min-height: 48px;
+  }
+
+  .guest-response-name {
+    font-size: clamp(1.04rem, 2.2svh, 1.2rem);
+  }
+
+  .video-invite-hero h1 {
+    font-size: clamp(4.1rem, 6.8svh, 5.4rem);
   }
 
   .guest-row {
-    font-size: clamp(1.28rem, 2.75svh, 1.82rem);
+    font-size: clamp(1.04rem, 2.2svh, 1.2rem);
   }
 
   .countdown-item strong {
@@ -2701,6 +2851,50 @@ button.rsvp-reserve:disabled {
     );
     width: clamp(50px, 6.2svh, 60px);
     height: clamp(50px, 6.2svh, 60px);
+  }
+}
+
+.portrait-orientation-guard {
+  display: none;
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
+  .portrait-orientation-guard {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 18px;
+    padding: 28px;
+    color: #5d5144;
+    text-align: center;
+    background: linear-gradient(180deg, #fffdf8, #f1eadf);
+  }
+
+  .portrait-orientation-guard__phone {
+    width: 54px;
+    height: 86px;
+    border: 2px solid currentColor;
+    border-radius: 10px;
+  }
+
+  .portrait-orientation-guard__phone::after {
+    display: block;
+    width: 5px;
+    height: 5px;
+    margin: 72px auto 0;
+    content: "";
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .portrait-orientation-guard p {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -2786,6 +2980,132 @@ button.rsvp-reserve:disabled {
 
   .countdown-item strong {
     font-size: clamp(2.25rem, 10.5vw, 2.85rem);
+  }
+}
+
+@media (max-height: 824px) {
+  .video-invite-panel:not(.video-invite-hero) {
+    padding-top: max(88px, calc(env(safe-area-inset-top) + 74px));
+    padding-bottom: max(58px, calc(env(safe-area-inset-bottom) + 44px));
+  }
+
+  .event-title,
+  .rsvp-title {
+    font-size: clamp(1.7rem, 4.4svh, 2.25rem);
+    letter-spacing: 0.1em;
+  }
+
+  .video-copy-stack {
+    gap: 10px;
+  }
+
+  .video-verse {
+    gap: 6px;
+    font-size: clamp(1.12rem, 2.55svh, 1.4rem);
+  }
+
+  .video-verse::after {
+    margin-top: 14px;
+  }
+
+  .video-invitation-copy {
+    gap: 10px;
+  }
+
+  .video-blessing-lines,
+  .video-request-copy {
+    font-size: clamp(1.02rem, 2.55svh, 1.25rem);
+    line-height: 1.24;
+  }
+
+  .video-family-names-group {
+    gap: 6px;
+  }
+
+  .video-small-line,
+  .video-family-name,
+  .video-celebration-date {
+    font-size: clamp(0.94rem, 2.3svh, 1.12rem);
+  }
+
+  .video-copy-stack .video-couple-signature {
+    font-size: clamp(3.4rem, 8svh, 4.7rem);
+  }
+
+  .event-rule {
+    margin-top: 14px;
+    margin-bottom: 18px;
+  }
+
+  .event-time {
+    font-size: clamp(1.9rem, 6svh, 2.7rem);
+  }
+
+  .event-card .event-place {
+    margin-top: 20px;
+    font-size: clamp(1.25rem, 3.4svh, 1.7rem);
+  }
+
+  .event-button {
+    min-height: 40px;
+    margin-top: 20px;
+  }
+
+  .gift-copy {
+    gap: 9px;
+  }
+
+  .gift-copy p {
+    font-size: clamp(1rem, 2.5svh, 1.22rem);
+    line-height: 1.24;
+  }
+
+  .gift-copy .gift-contact {
+    margin-top: 4px;
+    font-size: clamp(1.35rem, 3.5svh, 1.7rem);
+  }
+
+  .rsvp-card .event-rule {
+    margin-top: 12px;
+    margin-bottom: 16px;
+  }
+
+  .rsvp-line {
+    font-size: clamp(1rem, 2.55svh, 1.2rem);
+    line-height: 1.25;
+  }
+
+  .guest-list {
+    gap: 1px;
+    margin-top: 14px;
+  }
+
+  .guest-response-row {
+    min-height: 44px;
+    padding: 2px 0;
+  }
+
+  .guest-response-name {
+    font-size: clamp(1rem, 2.5svh, 1.22rem);
+  }
+
+  .guest-response-option {
+    min-height: 32px;
+    font-size: 0.68rem;
+  }
+
+  .guest-list--dense {
+    max-height: 34svh;
+  }
+
+  .rsvp-reserve {
+    min-height: 40px;
+    margin-top: 14px;
+  }
+
+  .rsvp-confirmation {
+    gap: 5px;
+    margin-top: 14px;
   }
 }
 

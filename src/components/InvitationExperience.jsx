@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import EnvelopeIntro, { envelopeIntroAssets } from "./EnvelopeIntro.jsx";
+import EnvelopeIntro from "./EnvelopeIntro.jsx";
 import InvitationCard from "./InvitationCard.jsx";
 import { invitationContent } from "../data/invitationContent.js";
 
@@ -21,7 +21,6 @@ const audioModules = import.meta.glob(
 
 const initialAssetReadiness = {
   fontsReady: false,
-  envelopeReady: false,
   openingVideoReady: false,
   posterReady: false,
   invitationVideoMetadataReady: false,
@@ -47,6 +46,23 @@ function wait(milliseconds) {
   });
 }
 
+function requestPortraitLock() {
+  const orientation = window.screen?.orientation;
+
+  if (typeof orientation?.lock !== "function") {
+    return;
+  }
+
+  try {
+    const lockRequest = orientation.lock("portrait-primary");
+    lockRequest?.catch?.(() => {
+      // Browser tabs may reject this; the landscape guard remains as a fallback.
+    });
+  } catch {
+    // Installed apps allow this more consistently than ordinary browser tabs.
+  }
+}
+
 function loadFonts() {
   if (!("fonts" in document)) {
     return Promise.resolve(true);
@@ -58,38 +74,6 @@ function loadFonts() {
     document.fonts.load('500 1em "Cormorant Garamond"'),
     document.fonts.load('600 1em "Cormorant Garamond"'),
   ]).then(() => true);
-}
-
-function preloadImage(src, registerCleanup) {
-  if (!src) {
-    return Promise.resolve(false);
-  }
-
-  return new Promise((resolve) => {
-    const image = new window.Image();
-    let isDone = false;
-
-    function finish(ok) {
-      if (isDone) {
-        return;
-      }
-
-      isDone = true;
-      image.onload = null;
-      image.onerror = null;
-      resolve(ok);
-    }
-
-    registerCleanup?.(() => {
-      finish(false);
-      image.src = "";
-    });
-
-    image.decoding = "async";
-    image.onload = () => finish(true);
-    image.onerror = () => finish(false);
-    image.src = src;
-  });
 }
 
 function LuxuryPreloader() {
@@ -115,6 +99,7 @@ function LuxuryPreloader() {
 export default function InvitationExperience({
   isInviteReady = true,
   rsvpGuests,
+  hideRsvp = false,
   submitRsvpAction,
   rsvpSubmitted = false,
 }) {
@@ -122,11 +107,19 @@ export default function InvitationExperience({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [isInvitationBackgroundReady, setIsInvitationBackgroundReady] = useState(false);
-  const [language, setLanguage] = useState(invitationContent.defaultLanguage);
+  const [language, setLanguage] = useState(() => {
+    try {
+      const savedLanguage = window.sessionStorage.getItem("invitation-language");
+      return savedLanguage === "fr" || savedLanguage === "en"
+        ? savedLanguage
+        : invitationContent.defaultLanguage;
+    } catch {
+      return invitationContent.defaultLanguage;
+    }
+  });
   const [isRsvpSubmitted, setIsRsvpSubmitted] = useState(rsvpSubmitted);
   const [assetReadiness, setAssetReadiness] = useState(initialAssetReadiness);
   const [minimumLoadingElapsed, setMinimumLoadingElapsed] = useState(false);
-  const [maximumLoadingElapsed, setMaximumLoadingElapsed] = useState(false);
   const musicRef = useRef(null);
   const invitationVideoPreloadRef = useRef(null);
   const hasMusic = Boolean(musicSources.mp3 || musicSources.m4a || musicSources.ogg);
@@ -136,13 +129,19 @@ export default function InvitationExperience({
   }, [rsvpSubmitted]);
 
   useEffect(() => {
-    let isMounted = true;
-    const cleanups = [];
+    requestPortraitLock();
+  }, []);
 
-    function registerCleanup(cleanup) {
-      cleanups.push(cleanup);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem("invitation-language", language);
+    } catch {
+      // Language selection still works when browser storage is unavailable.
     }
+  }, [language]);
 
+  useEffect(() => {
+    let isMounted = true;
     function setReady(key, value = true) {
       if (!isMounted) {
         return;
@@ -157,26 +156,6 @@ export default function InvitationExperience({
     async function loadAssets() {
       await Promise.race([loadFonts(), wait(900)]);
       setReady("fontsReady");
-
-      const envelopePreload = preloadImage(
-        envelopeIntroAssets.envelopeClosed,
-        registerCleanup,
-      );
-
-      envelopePreload.then((ok) => {
-        if (ok) {
-          setReady("envelopeReady");
-        }
-      });
-
-      const envelopeLoaded = await Promise.race([
-        envelopePreload,
-        wait(1800).then(() => null),
-      ]);
-
-      if (envelopeLoaded) {
-        setReady("envelopeReady");
-      }
     }
 
     wait(700).then(() => {
@@ -185,17 +164,10 @@ export default function InvitationExperience({
       }
     });
 
-    wait(4200).then(() => {
-      if (isMounted) {
-        setMaximumLoadingElapsed(true);
-      }
-    });
-
     loadAssets();
 
     return () => {
       isMounted = false;
-      cleanups.forEach((cleanup) => cleanup());
     };
   }, []);
 
@@ -207,17 +179,14 @@ export default function InvitationExperience({
     if (
       isInviteReady &&
       minimumLoadingElapsed &&
-      assetReadiness.envelopeReady &&
-      (assetReadiness.openingVideoReady || maximumLoadingElapsed)
+      assetReadiness.openingVideoReady
     ) {
       setIsInitialLoading(false);
     }
   }, [
-    assetReadiness.envelopeReady,
     assetReadiness.openingVideoReady,
     isInviteReady,
     isInitialLoading,
-    maximumLoadingElapsed,
     minimumLoadingElapsed,
   ]);
 
@@ -230,6 +199,8 @@ export default function InvitationExperience({
   }, [isInvitationOpen]);
 
   function primeMusic() {
+    requestPortraitLock();
+
     const music = musicRef.current;
 
     if (!music) return;
@@ -300,17 +271,6 @@ export default function InvitationExperience({
     setIsInvitationOpen(true);
   }
 
-  function handleEnvelopeReady() {
-    setAssetReadiness((current) =>
-      current.envelopeReady
-        ? current
-        : {
-            ...current,
-            envelopeReady: true,
-          },
-    );
-  }
-
   function handleOpeningVideoReady() {
     setAssetReadiness((current) =>
       current.openingVideoReady
@@ -322,8 +282,10 @@ export default function InvitationExperience({
     );
   }
 
-  function toggleLanguage() {
-    setLanguage((currentLanguage) => (currentLanguage === "en" ? "fr" : "en"));
+  function selectLanguage(nextLanguage) {
+    if (nextLanguage === "en" || nextLanguage === "fr") {
+      setLanguage(nextLanguage);
+    }
   }
 
   function handleRsvpSubmitted() {
@@ -344,9 +306,7 @@ export default function InvitationExperience({
             }}
           >
             <EnvelopeIntro
-              envelopeReady={assetReadiness.envelopeReady}
               onComplete={handleIntroComplete}
-              onEnvelopeReady={handleEnvelopeReady}
               onOpeningVideoReady={handleOpeningVideoReady}
               onPrepareInvitationMedia={prepareInvitationMedia}
               onPrimeMusic={primeMusic}
@@ -365,9 +325,10 @@ export default function InvitationExperience({
           >
             <InvitationCard
               language={language}
-              onToggleLanguage={toggleLanguage}
+              onSelectLanguage={selectLanguage}
               onBackgroundReady={() => setIsInvitationBackgroundReady(true)}
               rsvpGuests={rsvpGuests}
+              hideRsvp={hideRsvp}
               rsvpSubmitted={isRsvpSubmitted}
               onRsvpSubmitted={handleRsvpSubmitted}
               submitRsvpAction={submitRsvpAction}
@@ -413,6 +374,11 @@ export default function InvitationExperience({
           </span>
         </motion.button>
       )}
+
+      <div className="portrait-orientation-guard" role="status" aria-live="polite">
+        <span className="portrait-orientation-guard__phone" aria-hidden="true" />
+        <p>Please rotate your phone back to portrait.</p>
+      </div>
 
       <AnimatePresence>
         {isInitialLoading && <LuxuryPreloader />}

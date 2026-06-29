@@ -259,19 +259,27 @@ function BackgroundMedia({ assets, onPosterReady }) {
   );
 }
 
-function LanguageToggle({ language, onToggleLanguage, label }) {
+function LanguageToggle({ language, onSelectLanguage, label }) {
   return (
-    <button
-      type="button"
-      className="language-toggle"
-      dir="ltr"
-      aria-label={label}
-      onClick={onToggleLanguage}
-    >
-      <span className={language === "en" ? "is-active" : ""}>EN</span>
+    <div className="language-toggle" dir="ltr" aria-label={label} role="group">
+      <button
+        aria-pressed={language === "en"}
+        className={`language-toggle__option ${language === "en" ? "is-active" : ""}`}
+        onClick={() => onSelectLanguage("en")}
+        type="button"
+      >
+        EN
+      </button>
       <span aria-hidden="true">|</span>
-      <span className={language === "fr" ? "is-active" : ""}>FR</span>
-    </button>
+      <button
+        aria-pressed={language === "fr"}
+        className={`language-toggle__option ${language === "fr" ? "is-active" : ""}`}
+        onClick={() => onSelectLanguage("fr")}
+        type="button"
+      >
+        FR
+      </button>
+    </div>
   );
 }
 
@@ -384,7 +392,19 @@ function PartySection({ party, ui }) {
   return <EventSection event={party} ui={ui} />;
 }
 
-function GiftRegistrySection({ giftRegistry, showScrollCue = true }) {
+function InvitationCredit() {
+  return (
+    <p className="invitation-credit">
+      Powered by <span>Upscale Hub</span>
+    </p>
+  );
+}
+
+function GiftRegistrySection({
+  giftRegistry,
+  showCredit = false,
+  showScrollCue = true,
+}) {
   return (
     <StorySection showScrollCue={showScrollCue}>
       <div className="section-card gift-card">
@@ -403,12 +423,14 @@ function GiftRegistrySection({ giftRegistry, showScrollCue = true }) {
           ))}
         </div>
       </div>
+      {showCredit && <InvitationCredit />}
     </StorySection>
   );
 }
 
 function RsvpSection({
   couple,
+  language,
   rsvp,
   ui,
   rsvpGuests,
@@ -499,12 +521,13 @@ function RsvpSection({
   }, [guests]);
 
   return (
-    <StorySection showScrollCue={false}>
+    <StorySection className="rsvp-panel" showScrollCue={false}>
       <form
         action={isDatabaseRsvp ? formAction : undefined}
         aria-busy={isSubmitting}
         className="section-card rsvp-card"
       >
+        <input name="language" type="hidden" value={language} />
         <p className="event-eyebrow">{rsvp.eyebrow}</p>
         <h2 className="rsvp-title">{rsvp.title}</h2>
         <span className="event-rule" aria-hidden="true" />
@@ -519,7 +542,10 @@ function RsvpSection({
           />
         ))}
 
-        <div className="guest-list" aria-label="Guest names">
+        <div
+          className={`guest-list ${guests.length > 5 ? "guest-list--dense" : ""}`}
+          aria-label="Guest names"
+        >
           {guests.map((guest) => {
             const answeredYes = guestResponses[guest.id] === true;
             const answeredNo = guestResponses[guest.id] === false;
@@ -588,6 +614,7 @@ function RsvpSection({
           </p>
         )}
       </form>
+      <InvitationCredit />
     </StorySection>
   );
 }
@@ -626,7 +653,7 @@ function StoryProgress({ activeIndex, panelCount }) {
 
 export default function InvitationCard({
   language,
-  onToggleLanguage,
+  onSelectLanguage,
   onBackgroundReady,
   rsvpGuests,
   hideRsvp = false,
@@ -702,10 +729,15 @@ export default function InvitationCard({
         <InvitationSection couple={couple} invitation={invitation} />
         <CeremonySection ceremony={ceremony} ui={ui} />
         <PartySection party={party} ui={ui} />
-        <GiftRegistrySection giftRegistry={giftRegistry} showScrollCue={!hideRsvp} />
+        <GiftRegistrySection
+          giftRegistry={giftRegistry}
+          showCredit={hideRsvp}
+          showScrollCue={!hideRsvp}
+        />
         {!hideRsvp && (
           <RsvpSection
             couple={couple}
+            language={language}
             rsvp={rsvp}
             ui={ui}
             rsvpGuests={rsvpGuests}
@@ -720,7 +752,7 @@ export default function InvitationCard({
         <LanguageToggle
           language={language}
           label={ui.languageLabel}
-          onToggleLanguage={onToggleLanguage}
+          onSelectLanguage={onSelectLanguage}
         />
       )}
       {activePanelIndex > 0 && (

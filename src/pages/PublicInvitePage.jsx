@@ -2,6 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import InvitationExperience from "../components/InvitationExperience.jsx";
 import { getInviteByToken, submitFamilyRsvp } from "../services/backend";
 
+const rsvpMessages = {
+  en: {
+    invitationUnavailable: "This invitation could not be loaded. Please refresh and try again.",
+    incomplete: "Please answer Yes or No for every guest.",
+    success: "Your response has been received.",
+    submitError: "Could not submit your RSVP. Please try again.",
+  },
+  fr: {
+    invitationUnavailable:
+      "Cette invitation n’a pas pu être chargée. Veuillez actualiser la page et réessayer.",
+    incomplete: "Veuillez répondre Oui ou Non pour chaque invité.",
+    success: "Votre réponse a bien été enregistrée.",
+    submitError: "Impossible d’enregistrer votre réponse. Veuillez réessayer.",
+  },
+};
+
 function PublicStatus({ title, message }) {
   return (
     <main className="public-status-page">
@@ -72,17 +88,20 @@ export default function PublicInvitePage({ token }) {
 
   const submitRsvpAction = useCallback(
     async (_previousState, formData) => {
+      const responseLanguage = formData.get("language") === "fr" ? "fr" : "en";
+      const messages = rsvpMessages[responseLanguage];
+
       if (!invite) {
         return {
           ok: false,
-          message: "This invitation could not be loaded. Please refresh and try again.",
+          message: messages.invitationUnavailable,
         };
       }
 
       try {
         const responses = formData.getAll("guestResponses").map((value) => {
           if (typeof value !== "string") {
-            throw new Error("Please answer Yes or No for every guest.");
+            throw new Error(messages.incomplete);
           }
 
           const response = JSON.parse(value);
@@ -92,7 +111,7 @@ export default function PublicInvitePage({ token }) {
             typeof response.guestId !== "string" ||
             typeof response.attending !== "boolean"
           ) {
-            throw new Error("Please answer Yes or No for every guest.");
+            throw new Error(messages.incomplete);
           }
 
           return response;
@@ -104,7 +123,7 @@ export default function PublicInvitePage({ token }) {
           answeredGuestIds.size !== invite.guests.length ||
           invite.guests.some((guest) => !answeredGuestIds.has(guest.id))
         ) {
-          throw new Error("Please answer Yes or No for every guest.");
+          throw new Error(messages.incomplete);
         }
 
         const result = await submitFamilyRsvp({
@@ -139,12 +158,18 @@ export default function PublicInvitePage({ token }) {
 
         return {
           ok: true,
-          message: "Your response has been reserved.",
+          message: messages.success,
         };
       } catch (submitError) {
+        const isIncompleteResponse = submitError.message === messages.incomplete;
+
         return {
           ok: false,
-          message: submitError.message || "Could not submit your RSVP. Please try again.",
+          message: isIncompleteResponse
+            ? messages.incomplete
+            : responseLanguage === "fr"
+              ? messages.submitError
+              : submitError.message || messages.submitError,
         };
       }
     },

@@ -164,5 +164,5 @@ export default function App() {
     return <PublicInvitePage token={inviteToken} />;
   }
 
-  return <InvitationExperience />;
+  return <InvitationExperience hideRsvp />;
 }
